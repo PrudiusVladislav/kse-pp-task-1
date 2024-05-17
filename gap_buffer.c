@@ -11,6 +11,10 @@ void gap_buffer_init(GapBuffer *gb) { //done
     gb->length = INITIAL_BUFFER_SIZE;
     gb->gap.from = 0;
     gb->gap.to = INITIAL_BUFFER_SIZE;
+    gb->filepath = NULL;
+    gb->is_saved = true;
+    gb->line_starts = (int *)malloc(INITIAL_BUFFER_SIZE * sizeof(int));
+    gb->line_count = 0;
 }
 
 void gap_buffer_free(GapBuffer *gb) {//done
@@ -41,7 +45,44 @@ void gap_buffer_expand(GapBuffer *gb, int additional_length) {//done
     gb->buffer = new_buffer;
 }
 
-void gap_buffer_insert_text(GapBuffer *gb, const char *text) {// done
+void update_line_starts(
+    GapBuffer *gb,
+    const int position,
+    const bool is_insert)
+{
+    if (is_insert) {
+        gb->line_count++;
+        gb->line_starts = (int *)realloc(gb->line_starts, gb->line_count * sizeof(int));
+
+        int line = 0;
+        while (line < gb->line_count && gb->line_starts[line] < position) {
+            line++;
+        }
+
+        if (line < gb->line_count) {
+            memmove(&gb->line_starts[line + 1], &gb->line_starts[line], (gb->line_count - line - 1) * sizeof(int));
+            gb->line_starts[line] = position;
+        }
+        gb->line_starts[gb->line_count - 1] = position;
+    } else {
+        if (gb->line_count == 0) {
+            return;
+        }
+
+        int line = 0;
+        while (line < gb->line_count && gb->line_starts[line] < position) {
+            line++;
+        }
+
+        if (line < gb->line_count) {
+            memmove(&gb->line_starts[line], &gb->line_starts[line + 1], (gb->line_count - line - 1) * sizeof(int));
+            gb->line_count--;
+            gb->line_starts = (int *)realloc(gb->line_starts, gb->line_count * sizeof(int));
+        }
+    }
+}
+
+void gap_buffer_append(GapBuffer *gb, const char *text) {// done
     const int text_length = strlen(text);
     const int gap_length = gap_get_length(&gb->gap);
 
@@ -50,6 +91,10 @@ void gap_buffer_insert_text(GapBuffer *gb, const char *text) {// done
 
     memcpy(gb->buffer + gb->gap.from, text, text_length);
     gb->gap.from += text_length;
+
+    if (strchr(text, '\n') != NULL) {
+        update_line_starts(gb, gb->gap.from, true);
+    }
 }
 
 void move_gap(GapBuffer *gb, int position) { //done
@@ -80,6 +125,20 @@ void move_gap(GapBuffer *gb, int position) { //done
 void gap_buffer_delete_text(GapBuffer *gb, int position, int length) {
     move_gap(gb, position);
     gb->gap.to += length;
+
+    if (strchr(gb->buffer + position, '\n') != NULL) {
+        update_line_starts(gb, position, false);
+    }
+}
+
+void gap_buffer_delete_at(GapBuffer *gb, int line, int col, int length) {
+    if (line < 0 || line >= gb->line_count) {
+        printf("Invalid line number\n");
+        return;
+    }
+
+    int position = gb->line_starts[line] + col;
+    gap_buffer_delete_text(gb, position, length);
 }
 
 void gap_buffer_print(const GapBuffer *gb) { //done
@@ -92,13 +151,21 @@ void gap_buffer_print(const GapBuffer *gb) { //done
     printf("\n");
 }
 
-void gap_buffer_save_to_file(const GapBuffer *gb, const char *filename) {//done
+void set_filepath(GapBuffer *gb, const char *filename) {
+    free(gb->filepath);
+    gb->filepath = strdup(filename);
+}
+
+void gap_buffer_save_to_file(GapBuffer *gb, const char *filename) {//done
     FILE *file = fopen(filename, "w");
     if (file != NULL) {
         fwrite(gb->buffer, 1, gb->gap.from, file);
         fwrite(gb->buffer + gb->gap.to, 1, gb->length - gb->gap.to, file);
         fclose(file);
+        gb->is_saved = true;
+
         printf("Text has been saved successfully\n");
+        set_filepath(gb, filename);
     } else {
         printf("Error opening file for writing\n");
     }
@@ -118,17 +185,24 @@ void gap_buffer_load_from_file(GapBuffer *gb, const char *filename) {//done
 
         gb->gap.from = file_size;
         gb->gap.to = gb->length;
+        gb->is_saved = true;
+
         printf("Text has been loaded successfully\n");
+        set_filepath(gb, filename);
     } else {
         printf("Error opening file for reading\n");
     }
 }
 
-void gap_buffer_insert_at(GapBuffer *gb, int line, int index, const char *text) {
-    // TODO: Add multi-line support
-    int position = index;
+void gap_buffer_insert_at(GapBuffer *gb, int line, int col, const char *text) {
+    if (line < 0 || line >= gb->line_count) {
+        printf("Invalid line number\n");
+        return;
+    }
+
+    int position = gb->line_starts[line] + col;
     move_gap(gb, position);
-    gap_buffer_insert_text(gb, text);
+    gap_buffer_append(gb, text);
 }
 
 void gap_buffer_search(const GapBuffer *gb, const char *text) {//done

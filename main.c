@@ -30,7 +30,31 @@ void cmd_help(GapBuffer *gb, bool *is_running) {
     print_help();
 }
 
+void unsaved_changes_dialog(const GapBuffer *gb) {
+    if (gb->is_saved) {
+        return;
+    }
+
+    printf("You have unsaved changes. Do you want to save them? (y/n) ");
+    char answer;
+    scanf(" %c", &answer);
+    if (tolower(answer) == 'y') {
+        if (gb->filepath != NULL) {
+            gap_buffer_save_to_file(gb, gb->filepath);
+        } else {
+            char filename[256];
+            printf("Enter the file name for saving: ");
+            scanf("%s", filename);
+            gap_buffer_save_to_file(gb, filename);
+        }
+    }
+}
+
 void cmd_exit(GapBuffer *gb, bool *is_running) {
+    if (!gb->is_saved) {
+        unsaved_changes_dialog(gb);
+    }
+
     gap_buffer_free(gb);
     *is_running = false;
 }
@@ -39,12 +63,12 @@ void cmd_append(GapBuffer *gb, bool *is_running) {
     char text[256];
     printf("Enter text to append: ");
     scanf(" %[^\n]", text);
-    gap_buffer_insert_text(gb, text);
+    gap_buffer_append(gb, text);
 }
 
 void cmd_newline(GapBuffer *gb, bool *is_running) {
     printf("New line is started\n");
-    gap_buffer_insert_text(gb, "\n");
+    gap_buffer_append(gb, "\n");
 }
 
 void cmd_save(GapBuffer *gb, bool *is_running) {
@@ -55,6 +79,10 @@ void cmd_save(GapBuffer *gb, bool *is_running) {
 }
 
 void cmd_load(GapBuffer *gb, bool *is_running) {
+    if (!gb->is_saved) {
+        unsaved_changes_dialog(gb);
+    }
+
     char filename[256];
     printf("Enter the file name for loading: ");
     scanf("%s", filename);
@@ -100,7 +128,9 @@ Command commands[] = {
 };
 
 void handle_input(GapBuffer *gb, const char *command, bool *is_running) {
-    for (int i = 0; i < sizeof(commands) / sizeof(Command); i++) {
+    int commands_count = sizeof(commands) / sizeof(Command);
+
+    for (int i = 0; i < commands_count; i++) {
         if (strcmp(command, commands[i].name) == 0) {
             commands[i].func(gb, is_running);
             return;
@@ -125,6 +155,21 @@ char *trim_whitespace(char *str) {
     return str;
 }
 
+char *to_lower(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+
+    return str;
+}
+
+char *get_input_command() {
+    char *command = (char *)malloc(256 * sizeof(char));
+    printf("[TEDitor]>");
+    scanf("%s", command);
+    return to_lower(trim_whitespace(command));
+}
+
 int main(void) {
     GapBuffer *gb = (GapBuffer *)malloc(sizeof(GapBuffer));
     gap_buffer_init(gb);
@@ -133,10 +178,8 @@ int main(void) {
     print_help();
 
     while (is_running) {
-        char command[256];
-        printf("[EDitor]$: ");
-        scanf("%s", command);
-        handle_input(gb, trim_whitespace(command), &is_running);
+        const char *command = get_input_command();
+        handle_input(gb, command, &is_running);
     }
 
     return 0;
