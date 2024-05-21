@@ -7,12 +7,16 @@
 #define DEFAULT_WINDOW_SIZE 10
 
 void gap_buffer_init(GapBuffer *gb) { //done
-    gb->buffer = (char *)malloc(INITIAL_BUFFER_SIZE * sizeof(char));
+    gb->buffer = (char *)malloc((INITIAL_BUFFER_SIZE + 1) * sizeof(char));
     gb->length = INITIAL_BUFFER_SIZE;
+    gb->buffer[gb->length] = '\0';
+
     gb->gap.from = 0;
     gb->gap.to = INITIAL_BUFFER_SIZE;
+
     gb->filepath = NULL;
     gb->is_saved = true;
+
     gb->line_starts = (int *)malloc(INITIAL_BUFFER_SIZE * sizeof(int));
     gb->line_count = 0;
 }
@@ -28,7 +32,8 @@ int gap_get_length(const GapWindow *gap) {//done
 
 void gap_buffer_expand(GapBuffer *gb, int additional_length) {//done
     const int new_length = gb->length + additional_length + DEFAULT_WINDOW_SIZE;
-    char *new_buffer = (char *)malloc(new_length * sizeof(char));
+    char *new_buffer = (char *)malloc((new_length + 1) * sizeof(char));
+    new_buffer[new_length] = '\0';
 
     memcpy(new_buffer, gb->buffer, gb->gap.from);
 
@@ -91,6 +96,7 @@ void gap_buffer_append(GapBuffer *gb, const char *text) {// done
 
     memcpy(gb->buffer + gb->gap.from, text, text_length);
     gb->gap.from += text_length;
+    gb->is_saved = false;
 
     if (strchr(text, '\n') != NULL) {
         update_line_starts(gb, gb->gap.from, true);
@@ -125,6 +131,7 @@ void move_gap(GapBuffer *gb, int position) { //done
 void gap_buffer_delete_text(GapBuffer *gb, int position, int length) {
     move_gap(gb, position);
     gb->gap.to += length;
+    gb->is_saved = false;
 
     if (strchr(gb->buffer + position, '\n') != NULL) {
         update_line_starts(gb, position, false);
@@ -141,11 +148,16 @@ void gap_buffer_delete_at(GapBuffer *gb, int line, int col, int length) {
     gap_buffer_delete_text(gb, position, length);
 }
 
-void gap_buffer_print(const GapBuffer *gb) { //done
-    for (int i = 0; i < gb->length; i++) {
-        if (i == gb-> gap.from) {
-            i = gb->gap.to - 1;
-        }
+void gap_buffer_print(const GapBuffer *gb) {//done
+    if (gb->length == 0) {
+        printf("Buffer is empty :(\n");
+        return;
+    }
+
+    for (int i = 0; i < gb->gap.from; i++) {
+        printf("%c", gb->buffer[i]);
+    }
+    for (int i = gb->gap.to; i < gb->length; i++) {
         printf("%c", gb->buffer[i]);
     }
     printf("\n");
@@ -171,6 +183,17 @@ void gap_buffer_save_to_file(GapBuffer *gb, const char *filename) {//done
     }
 }
 
+void populate_line_starts(GapBuffer *gb) {
+    gb->line_count = 0;
+    for (int i = 0; i < gb->gap.from; i++) { // assuming that gap window is at the end of the buffer
+        if (gb->buffer[i] == '\n') {
+            gb->line_starts = (int *)realloc(gb->line_starts, (gb->line_count + 1) * sizeof(int));
+            gb->line_starts[gb->line_count] = i + 1;
+            gb->line_count++;
+        }
+    }
+}
+
 void gap_buffer_load_from_file(GapBuffer *gb, const char *filename) {//done
     FILE *file = fopen(filename, "r");
     if (file != NULL) {
@@ -179,13 +202,16 @@ void gap_buffer_load_from_file(GapBuffer *gb, const char *filename) {//done
         fseek(file, 0, SEEK_SET);
 
         gb->length = file_size + DEFAULT_WINDOW_SIZE;
-        gb->buffer = (char *)realloc(gb->buffer, gb->length * sizeof(char));
+        gb->buffer = (char *)realloc(gb->buffer, (gb->length + 1) * sizeof(char));
         fread(gb->buffer, 1, file_size, file);
         fclose(file);
+        gb->buffer[gb->length] = '\0';
 
         gb->gap.from = file_size;
         gb->gap.to = gb->length;
         gb->is_saved = true;
+
+        populate_line_starts(gb);
 
         printf("Text has been loaded successfully\n");
         set_filepath(gb, filename);

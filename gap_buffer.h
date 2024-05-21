@@ -19,11 +19,7 @@ typedef struct {
 
 void gap_buffer_init(GapBuffer *gb);
 void gap_buffer_free(GapBuffer *gb);
-// int gap_get_length(const GapWindow *gap);
-// void gap_buffer_expand(GapBuffer *gb, int additional_length);
 void gap_buffer_append(GapBuffer *gb, const char *text);
-// void move_gap(GapBuffer *gb, int position);
-// void gap_buffer_delete_text(GapBuffer *gb, int position, int length);
 void gap_buffer_delete_at(GapBuffer *gb, int line, int index, int length);
 void gap_buffer_print(const GapBuffer *gb);
 void gap_buffer_save_to_file(GapBuffer *gb, const char *filename);

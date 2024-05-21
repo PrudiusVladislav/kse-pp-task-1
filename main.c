@@ -96,7 +96,7 @@ void cmd_print(GapBuffer *gb, bool *is_running) {
 void cmd_insert(GapBuffer *gb, bool *is_running) {
     char text[256];
     int line, index;
-    printf("Choose line and index: ");
+    printf("Choose line and column (e.g. 8 2): ");
     scanf("%d %d", &line, &index);
     printf("Enter text to insert: ");
     scanf(" %[^\n]", text);
