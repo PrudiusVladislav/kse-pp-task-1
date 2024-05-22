@@ -83,7 +83,7 @@ void cmd_load(GapBuffer *gb, bool *is_running) {
     }
 
     char filename[256];
-    printf("Enter the file name for loading: ");
+    printf("Enter the file name for loading:");
     scanf("%s", filename);
     gap_buffer_load_from_file(gb, filename);
 }
