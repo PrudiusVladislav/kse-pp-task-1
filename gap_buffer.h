@@ -7,13 +7,18 @@ typedef struct {
     int to;
 } GapWindow;
 
+typedef struct LineStartNode {
+    int position;
+    struct LineStartNode* next;
+} LineStartNode;
+
 typedef struct {
     int length;
     GapWindow gap;
     char *buffer;
     char *filepath;
     bool is_saved;
-    int *line_starts;
+    LineStartNode *line_starts;
     int line_count;
 } GapBuffer;
 

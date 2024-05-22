@@ -54,8 +54,7 @@ void cmd_exit(GapBuffer *gb, bool *is_running) {
     if (!gb->is_saved) {
         unsaved_changes_dialog(gb);
     }
-
-    gap_buffer_free(gb);
+    
     *is_running = false;
 }
 
@@ -182,5 +181,6 @@ int main(void) {
         handle_input(gb, command, &is_running);
     }
 
+    gap_buffer_free(gb);
     return 0;
 }

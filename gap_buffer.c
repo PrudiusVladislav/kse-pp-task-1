@@ -17,12 +17,32 @@ void gap_buffer_init(GapBuffer *gb) { //done
     gb->filepath = NULL;
     gb->is_saved = true;
 
-    gb->line_starts = (int *)malloc(INITIAL_BUFFER_SIZE * sizeof(int));
+    gb->line_starts = NULL;
     gb->line_count = 0;
 }
 
 void gap_buffer_free(GapBuffer *gb) {//done
-    free(gb->buffer);
+    if (gb == NULL) {
+        return;
+    }
+
+    if (gb->line_starts != NULL) {
+        LineStartNode* node = gb->line_starts;
+        while (node != NULL) {
+            LineStartNode* next = node->next;
+            free(node);
+            node = next;
+        }
+    }
+    if (gb->buffer != NULL) {
+        free(gb->buffer);
+    }
+    if (gb->filepath != NULL) {
+        free(gb->filepath);
+    }
+    if (gb->line_starts != NULL) {
+        free(gb->line_starts);
+    }
     free(gb);
 }
 
@@ -50,40 +70,40 @@ void gap_buffer_expand(GapBuffer *gb, int additional_length) {//done
     gb->buffer = new_buffer;
 }
 
-void update_line_starts(
-    GapBuffer *gb,
-    const int position,
-    const bool is_insert)
-{
+void update_line_starts(GapBuffer *gb, const int position, const bool is_insert) {
+    LineStartNode* node = gb->line_starts;
+    LineStartNode* prev = NULL;
+
+    while (node != NULL && node->position < position) {
+        prev = node;
+        node = node->next;
+    }
+
     if (is_insert) {
+        LineStartNode* new_node = (LineStartNode*)malloc(sizeof(LineStartNode));
+        new_node->position = position;
+        new_node->next = node;
+
+        if (prev == NULL) {
+            gb->line_starts = new_node;
+        } else {
+            prev->next = new_node;
+        }
+
         gb->line_count++;
-        gb->line_starts = (int *)realloc(gb->line_starts, gb->line_count * sizeof(int));
-
-        int line = 0;
-        while (line < gb->line_count && gb->line_starts[line] < position) {
-            line++;
-        }
-
-        if (line < gb->line_count) {
-            memmove(&gb->line_starts[line + 1], &gb->line_starts[line], (gb->line_count - line - 1) * sizeof(int));
-            gb->line_starts[line] = position;
-        }
-        gb->line_starts[gb->line_count - 1] = position;
     } else {
-        if (gb->line_count == 0) {
+        if (node == NULL) {
             return;
         }
 
-        int line = 0;
-        while (line < gb->line_count && gb->line_starts[line] < position) {
-            line++;
+        if (prev == NULL) {
+            gb->line_starts = node->next;
+        } else {
+            prev->next = node->next;
         }
 
-        if (line < gb->line_count) {
-            memmove(&gb->line_starts[line], &gb->line_starts[line + 1], (gb->line_count - line - 1) * sizeof(int));
-            gb->line_count--;
-            gb->line_starts = (int *)realloc(gb->line_starts, gb->line_count * sizeof(int));
-        }
+        free(node);
+        gb->line_count--;
     }
 }
 
@@ -97,6 +117,13 @@ void gap_buffer_append(GapBuffer *gb, const char *text) {// done
     memcpy(gb->buffer + gb->gap.from, text, text_length);
     gb->gap.from += text_length;
     gb->is_saved = false;
+
+    if (gb->line_count == 0) {
+        gb->line_starts = (LineStartNode*)malloc(sizeof(LineStartNode));
+        gb->line_starts->position = 0;
+        gb->line_starts->next = NULL;
+        gb->line_count++;
+    }
 
     if (strchr(text, '\n') != NULL) {
         update_line_starts(gb, gb->gap.from, true);
@@ -144,7 +171,7 @@ void gap_buffer_delete_at(GapBuffer *gb, int line, int col, int length) {
         return;
     }
 
-    int position = gb->line_starts[line] + col;
+    int position = gb->line_starts[line].position + col;
     gap_buffer_delete_text(gb, position, length);
 }
 
@@ -185,10 +212,20 @@ void gap_buffer_save_to_file(GapBuffer *gb, const char *filename) {//done
 
 void populate_line_starts(GapBuffer *gb) {
     gb->line_count = 0;
+    LineStartNode* last_node = NULL;
     for (int i = 0; i < gb->gap.from; i++) { // assuming that gap window is at the end of the buffer
         if (gb->buffer[i] == '\n') {
-            gb->line_starts = (int *)realloc(gb->line_starts, (gb->line_count + 1) * sizeof(int));
-            gb->line_starts[gb->line_count] = i + 1;
+            LineStartNode* new_node = (LineStartNode*)malloc(sizeof(LineStartNode));
+            new_node->position = i + 1;
+            new_node->next = NULL;
+
+            if (last_node == NULL) {
+                gb->line_starts = new_node;
+            } else {
+                last_node->next = new_node;
+            }
+
+            last_node = new_node;
             gb->line_count++;
         }
     }
@@ -226,9 +263,22 @@ void gap_buffer_insert_at(GapBuffer *gb, int line, int col, const char *text) {
         return;
     }
 
-    int position = gb->line_starts[line] + col;
+    int position = gb->line_starts[line].position + col;
     move_gap(gb, position);
-    gap_buffer_append(gb, text);
+
+    const int text_length = strlen(text);
+    const int gap_length = gap_get_length(&gb->gap);
+
+    if (text_length > gap_length)
+        gap_buffer_expand(gb, text_length - gap_length);
+
+    memcpy(gb->buffer + gb->gap.from, text, text_length);
+    gb->gap.from += text_length;
+    gb->is_saved = false;
+
+    if (strchr(text, '\n') != NULL) {
+        update_line_starts(gb, gb->gap.from, true);
+    }
 }
 
 void gap_buffer_search(const GapBuffer *gb, const char *text) {//done
