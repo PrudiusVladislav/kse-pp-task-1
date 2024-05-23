@@ -161,6 +161,13 @@ int main(void) {
         handle_input(gb, command, &is_running);
     }
 
+    // gap_buffer_append(gb, "\n");
+    // gap_buffer_append(gb, "line2");
+    // gap_buffer_insert_at(gb, 0, 0, "line1");
+    // gap_buffer_append(gb, "\n");
+    // gap_buffer_insert_at(gb, 2, 0, "line3");
+    // gap_buffer_print(gb);
+
     gap_buffer_free(gb);
     return 0;
 }

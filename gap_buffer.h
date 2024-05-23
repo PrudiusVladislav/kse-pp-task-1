@@ -7,10 +7,9 @@ typedef struct {
     int to;
 } GapWindow;
 
-typedef struct LineStartNode {
+typedef struct LineStart {
     int position;
-    struct LineStartNode* next;
-} LineStartNode;
+} LineStart;
 
 typedef struct {
     int length;
@@ -18,14 +17,14 @@ typedef struct {
     char *buffer;
     char *filepath;
     bool is_saved;
-    LineStartNode *line_starts;
+    LineStart *line_starts;
     int line_count;
+    int line_starts_capacity;
 } GapBuffer;
 
 void gap_buffer_init(GapBuffer *gb);
 void gap_buffer_free(GapBuffer *gb);
 void gap_buffer_append(GapBuffer *gb, const char *text);
-void gap_buffer_delete_at(GapBuffer *gb, int line, int index, int length);
 void gap_buffer_print(const GapBuffer *gb);
 void gap_buffer_save_to_file(GapBuffer *gb, const char *filename);
 void gap_buffer_load_from_file(GapBuffer *gb, const char *filename);

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define INITIAL_LINE_STARTS_CAPACITY 10
 #define INITIAL_BUFFER_SIZE 100
 #define DEFAULT_WINDOW_SIZE 10
 
@@ -18,12 +19,17 @@ void gap_buffer_init(GapBuffer *gb) {
     gb->filepath = NULL;
     gb->is_saved = true;
 
-    gb->line_starts = NULL;
+    gb->line_starts = (LineStart*)malloc(INITIAL_LINE_STARTS_CAPACITY * sizeof(LineStart));
+    gb->line_starts_capacity = INITIAL_LINE_STARTS_CAPACITY;
     gb->line_count = 0;
 }
 
-int gap_get_length(const GapWindow *gap) {
+int gap_buffer_get_window_length(const GapWindow *gap) {
     return gap->to - gap->from;
+}
+
+int gap_buffer_get_content_length(const GapBuffer *gb) {
+    return gb->length - gap_buffer_get_window_length(&gb->gap);
 }
 
 void gap_buffer_expand(GapBuffer *gb, const int additional_length) {
@@ -46,67 +52,35 @@ void gap_buffer_expand(GapBuffer *gb, const int additional_length) {
     gb->buffer = new_buffer;
 }
 
+// invoked when a '\n' is inserted or deleted;
+// int position - position of the new line start or the line start to delete
 void update_line_starts(GapBuffer *gb, const int position, const bool is_insert) {
-    LineStartNode* node = gb->line_starts;
-    LineStartNode* prev = NULL;
-
-    while (node != NULL && node->position < position) {
-        prev = node;
-        node = node->next;
-    }
-
     if (is_insert) {
-        LineStartNode* new_node = (LineStartNode*)malloc(sizeof(LineStartNode));
-        new_node->position = position;
-        new_node->next = node;
-
-        if (prev == NULL) {
-            gb->line_starts = new_node;
-        } else {
-            prev->next = new_node;
+        if (gb->line_count == gb->line_starts_capacity) {
+            gb->line_starts_capacity *= 2;
+            gb->line_starts = (LineStart*)realloc(
+                gb->line_starts, gb->line_starts_capacity * sizeof(LineStart));
         }
-
+        int i = gb->line_count;
+        while (i > 0 && gb->line_starts[i - 1].position > position) {
+            gb->line_starts[i] = gb->line_starts[i - 1];
+            i--;
+        }
+        gb->line_starts[i].position = position;
         gb->line_count++;
     } else {
-        if (node == NULL) {
-            return;
+        int i;
+        for (i = 0; i < gb->line_count && gb->line_starts[i].position != position; i++){}
+        if (i < gb->line_count) {
+            for (; i < gb->line_count - 1; i++) {
+                gb->line_starts[i] = gb->line_starts[i + 1];
+            }
+            gb->line_count--;
         }
-
-        if (prev == NULL) {
-            gb->line_starts = node->next;
-        } else {
-            prev->next = node->next;
-        }
-
-        free(node);
-        gb->line_count--;
     }
 }
 
-void gap_buffer_append(GapBuffer *gb, const char *text) {// done
-    const int text_length = strlen(text);
-    const int gap_length = gap_get_length(&gb->gap);
-
-    if (text_length > gap_length)
-        gap_buffer_expand(gb, text_length - gap_length);
-
-    memcpy(gb->buffer + gb->gap.from, text, text_length);
-    gb->gap.from += text_length;
-    gb->is_saved = false;
-
-    if (gb->line_count == 0) {
-        gb->line_starts = (LineStartNode*)malloc(sizeof(LineStartNode));
-        gb->line_starts->position = 0;
-        gb->line_starts->next = NULL;
-        gb->line_count++;
-    }
-
-    if (strchr(text, '\n') != NULL) {
-        update_line_starts(gb, gb->gap.from, true);
-    }
-}
-
-void move_gap(GapBuffer *gb, int position) { //done
+void move_gap(GapBuffer *gb, const int position) {
     if (position < gb->gap.from) {
         int move_length = gb->gap.from - position;
 
@@ -131,28 +105,32 @@ void move_gap(GapBuffer *gb, int position) { //done
     }
 }
 
-void gap_buffer_delete_text(GapBuffer *gb, int position, int length) {
-    move_gap(gb, position);
-    gb->gap.to += length;
+void gap_buffer_append(GapBuffer *gb, const char *text) {
+    //move gap window to the end of the buffer
+    move_gap(gb, gap_buffer_get_content_length(gb));
+
+    const int text_length = strlen(text);
+    const int gap_length = gap_buffer_get_window_length(&gb->gap);
+
+    if (text_length > gap_length)
+        gap_buffer_expand(gb, text_length - gap_length);
+
+    memcpy(gb->buffer + gb->gap.from, text, text_length);
+    gb->gap.from += text_length;
     gb->is_saved = false;
 
-    if (strchr(gb->buffer + position, '\n') != NULL) {
-        update_line_starts(gb, position, false);
+    if (gb->line_count == 0) {
+        gb->line_starts[gb->line_count].position = 0;
+        gb->line_count++;
+    }
+
+    if (strchr(text, '\n') != NULL) {
+        update_line_starts(gb, gb->gap.from, true);
     }
 }
 
-void gap_buffer_delete_at(GapBuffer *gb, int line, int col, int length) {
-    if (line < 0 || line >= gb->line_count) {
-        printf("Invalid line number\n");
-        return;
-    }
-
-    int position = gb->line_starts[line].position + col;
-    gap_buffer_delete_text(gb, position, length);
-}
-
-void gap_buffer_print(const GapBuffer *gb) {//done
-    if (gb->length == 0) {
+void gap_buffer_print(const GapBuffer *gb) {
+    if (gap_buffer_get_content_length(gb) == 0) {
         printf("Buffer is empty :(\n");
         return;
     }
@@ -171,7 +149,7 @@ void set_filepath(GapBuffer *gb, const char *filename) {
     gb->filepath = strdup(filename);
 }
 
-void gap_buffer_save_to_file(GapBuffer *gb, const char *filename) {//done
+void gap_buffer_save_to_file(GapBuffer *gb, const char *filename) {
     FILE *file = fopen(filename, "w");
     if (file != NULL) {
         fwrite(gb->buffer, 1, gb->gap.from, file);
@@ -186,39 +164,40 @@ void gap_buffer_save_to_file(GapBuffer *gb, const char *filename) {//done
     }
 }
 
+// invoked when loading a file
 void populate_line_starts(GapBuffer *gb) {
     gb->line_count = 0;
-    LineStartNode* last_node = NULL;
-    for (int i = 0; i < gb->gap.from; i++) { // assuming that gap window is at the end of the buffer
-        if (gb->buffer[i] == '\n') {
-            LineStartNode* new_node = (LineStartNode*)malloc(sizeof(LineStartNode));
-            new_node->position = i + 1;
-            new_node->next = NULL;
-
-            if (last_node == NULL) {
-                gb->line_starts = new_node;
-            } else {
-                last_node->next = new_node;
-            }
-
-            last_node = new_node;
-            gb->line_count++;
+    for (int i = 0; i < gb->gap.from; i++) {
+        if (gb->buffer[i] != '\n') {
+            continue;
         }
+        if (gb->line_count == gb->line_starts_capacity) {
+            gb->line_starts_capacity *= 2;
+            gb->line_starts = (LineStart*)realloc(
+                gb->line_starts, gb->line_starts_capacity * sizeof(LineStart));
+        }
+        gb->line_starts[gb->line_count].position = i + 1;
+        gb->line_count++;
     }
 }
 
-void gap_buffer_load_from_file(GapBuffer *gb, const char *filename) {//done
+long get_file_size(FILE *file) {
+    fseek(file, 0, SEEK_END);
+    const long size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    return size;
+}
+
+void gap_buffer_load_from_file(GapBuffer *gb, const char *filename) {
     FILE *file = fopen(filename, "r");
     if (file != NULL) {
-        fseek(file, 0, SEEK_END);
-        long file_size = ftell(file);
-        fseek(file, 0, SEEK_SET);
+        const long file_size = get_file_size(file);
 
         gb->length = file_size + DEFAULT_WINDOW_SIZE;
         gb->buffer = (char *)realloc(gb->buffer, (gb->length + 1) * sizeof(char));
         fread(gb->buffer, 1, file_size, file);
         fclose(file);
-        gb->buffer[gb->length] = '\0';
+        terminate_string(gb->buffer, gb->length);
 
         gb->gap.from = file_size;
         gb->gap.to = gb->length;
@@ -233,17 +212,17 @@ void gap_buffer_load_from_file(GapBuffer *gb, const char *filename) {//done
     }
 }
 
-void gap_buffer_insert_at(GapBuffer *gb, int line, int col, const char *text) {
+void gap_buffer_insert_at(GapBuffer *gb, const int line, const int col, const char *text) {
     if (line < 0 || line >= gb->line_count) {
         printf("Invalid line number\n");
         return;
     }
 
-    int position = gb->line_starts[line].position + col;
+    const int position = gb->line_starts[line].position + col;
     move_gap(gb, position);
 
     const int text_length = strlen(text);
-    const int gap_length = gap_get_length(&gb->gap);
+    const int gap_length = gap_buffer_get_window_length(&gb->gap);
 
     if (text_length > gap_length)
         gap_buffer_expand(gb, text_length - gap_length);
@@ -251,6 +230,11 @@ void gap_buffer_insert_at(GapBuffer *gb, int line, int col, const char *text) {
     memcpy(gb->buffer + gb->gap.from, text, text_length);
     gb->gap.from += text_length;
     gb->is_saved = false;
+
+    // Update positions of subsequent lines
+    for (int i = line + 1; i < gb->line_count; i++) {
+        gb->line_starts[i].position += text_length;
+    }
 
     if (strchr(text, '\n') != NULL) {
         update_line_starts(gb, gb->gap.from, true);
@@ -278,21 +262,13 @@ void gap_buffer_free(GapBuffer *gb) {
     }
 
     if (gb->line_starts != NULL) {
-        LineStartNode* node = gb->line_starts;
-        while (node != NULL) {
-            LineStartNode* next = node->next;
-            free(node);
-            node = next;
-        }
+        free(gb->line_starts);
     }
     if (gb->buffer != NULL) {
         free(gb->buffer);
     }
     if (gb->filepath != NULL) {
         free(gb->filepath);
-    }
-    if (gb->line_starts != NULL) {
-        free(gb->line_starts);
     }
     free(gb);
 }
