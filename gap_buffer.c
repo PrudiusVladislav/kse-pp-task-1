@@ -1,4 +1,5 @@
 #include "gap_buffer.h"
+#include "string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +7,7 @@
 #define INITIAL_BUFFER_SIZE 100
 #define DEFAULT_WINDOW_SIZE 10
 
-void gap_buffer_init(GapBuffer *gb) { //done
+void gap_buffer_init(GapBuffer *gb) {
     gb->buffer = (char *)malloc((INITIAL_BUFFER_SIZE + 1) * sizeof(char));
     gb->length = INITIAL_BUFFER_SIZE;
     gb->buffer[gb->length] = '\0';
@@ -21,39 +22,14 @@ void gap_buffer_init(GapBuffer *gb) { //done
     gb->line_count = 0;
 }
 
-void gap_buffer_free(GapBuffer *gb) {//done
-    if (gb == NULL) {
-        return;
-    }
-
-    if (gb->line_starts != NULL) {
-        LineStartNode* node = gb->line_starts;
-        while (node != NULL) {
-            LineStartNode* next = node->next;
-            free(node);
-            node = next;
-        }
-    }
-    if (gb->buffer != NULL) {
-        free(gb->buffer);
-    }
-    if (gb->filepath != NULL) {
-        free(gb->filepath);
-    }
-    if (gb->line_starts != NULL) {
-        free(gb->line_starts);
-    }
-    free(gb);
-}
-
-int gap_get_length(const GapWindow *gap) {//done
+int gap_get_length(const GapWindow *gap) {
     return gap->to - gap->from;
 }
 
-void gap_buffer_expand(GapBuffer *gb, int additional_length) {//done
+void gap_buffer_expand(GapBuffer *gb, const int additional_length) {
     const int new_length = gb->length + additional_length + DEFAULT_WINDOW_SIZE;
     char *new_buffer = (char *)malloc((new_length + 1) * sizeof(char));
-    new_buffer[new_length] = '\0';
+    terminate_string(new_buffer, new_length);
 
     memcpy(new_buffer, gb->buffer, gb->gap.from);
 
@@ -294,4 +270,29 @@ void gap_buffer_search(const GapBuffer *gb, const char *text) {//done
                 0, i - (gb->gap.to - gb->gap.from));
         }
     }
+}
+
+void gap_buffer_free(GapBuffer *gb) {
+    if (gb == NULL) {
+        return;
+    }
+
+    if (gb->line_starts != NULL) {
+        LineStartNode* node = gb->line_starts;
+        while (node != NULL) {
+            LineStartNode* next = node->next;
+            free(node);
+            node = next;
+        }
+    }
+    if (gb->buffer != NULL) {
+        free(gb->buffer);
+    }
+    if (gb->filepath != NULL) {
+        free(gb->filepath);
+    }
+    if (gb->line_starts != NULL) {
+        free(gb->line_starts);
+    }
+    free(gb);
 }

@@ -1,6 +1,7 @@
+#include "gap_buffer.h"
+#include "string_utils.h"
 #include <ctype.h>
 #include <stdbool.h>
-#include "gap_buffer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +55,7 @@ void cmd_exit(GapBuffer *gb, bool *is_running) {
     if (!gb->is_saved) {
         unsaved_changes_dialog(gb);
     }
-    
+
     *is_running = false;
 }
 
@@ -96,6 +97,7 @@ void cmd_insert(GapBuffer *gb, bool *is_running) {
     char text[256];
     int line, index;
     printf("Choose line and column (e.g. 8 2): ");
+    fflush(stdout);
     scanf("%d %d", &line, &index);
     printf("Enter text to insert: ");
     scanf(" %[^\n]", text);
@@ -138,28 +140,6 @@ void handle_input(GapBuffer *gb, const char *command, bool *is_running) {
 
     printf("The command is not implemented yet :(\n");
     print_help();
-}
-
-char *trim_whitespace(char *str) {
-    while(isspace(*str)) str++;
-
-    if(*str == 0)
-        return str;
-
-    char *end = str + strlen(str) - 1;
-    while(end > str && isspace(*end)) end--;
-
-    end[1] = '\0';
-
-    return str;
-}
-
-char *to_lower(char *str) {
-    for (int i = 0; str[i]; i++) {
-        str[i] = tolower(str[i]);
-    }
-
-    return str;
 }
 
 char *get_input_command() {

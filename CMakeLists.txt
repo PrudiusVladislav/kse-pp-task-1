@@ -5,4 +5,6 @@ set(CMAKE_C_STANDARD 17)
 
 add_executable(kse_pp_task_1 main.c
         gap_buffer.h
-        gap_buffer.c)
+        gap_buffer.c
+        string_utils.h
+        string_utils.c)
