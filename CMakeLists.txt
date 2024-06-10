@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.28)
-project(kse_pp_task_1 C)
+project(kse_pp_task_1 CXX)
 
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 
-add_executable(kse_pp_task_1 main.c
-        gap_buffer.h
-        gap_buffer.c
-        string_utils.h
-        string_utils.c)
+
+add_executable(kse_pp_task_1 main.cpp
+        GapBuffer.h
+        GapBuffer.cpp
+        StringUtils.h
+        StringUtils.cpp
+        CommandHandler.h
+        CommandHandler.cpp)
