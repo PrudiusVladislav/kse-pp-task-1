@@ -10,4 +10,6 @@ add_executable(kse_pp_task_1 main.cpp
         StringUtils.h
         StringUtils.cpp
         CommandHandler.h
-        CommandHandler.cpp)
+        CommandHandler.cpp
+        Commands.h
+        Commands.cpp)
