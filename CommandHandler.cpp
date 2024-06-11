@@ -3,150 +3,114 @@
 
 #include <functional>
 #include <iostream>
-#include <string.h>
+#include <cstring>
 
 
-CommandHandler::CommandHandler(GapBuffer *gb, bool *isRunning): _gb(gb), _isRunning(isRunning) {
-    _commands = {
-        {"help", std::bind(&CommandHandler::help, this)},
-        {"exit", std::bind(&CommandHandler::exitEditor, this)},
-        {"append", std::bind(&CommandHandler::append, this)},
-        {"nl", std::bind(&CommandHandler::newline, this)},
-        {"save", std::bind(&CommandHandler::save, this)},
-        {"load", std::bind(&CommandHandler::load, this)},
-        {"print", std::bind(&CommandHandler::print, this)},
-        {"insert", std::bind(&CommandHandler::insert, this)},
-        {"search", std::bind(&CommandHandler::search, this)},
-        {"clear", std::bind(&CommandHandler::clear, this)},
-        {"delete", std::bind(&CommandHandler::deleteAt, this)}
-    };
+CommandHandler::CommandHandler(GapBuffer *gb, bool *isRunning) : _gb(gb), _isRunning(isRunning) {
+    _commands.push_back(new ExitCommand(gb, isRunning));
+    _commands.push_back(new AppendCommand(gb, isRunning));
+    _commands.push_back(new NewlineCommand(gb, isRunning));
+    _commands.push_back(new SaveCommand(gb, isRunning));
+    _commands.push_back(new LoadCommand(gb, isRunning));
+    _commands.push_back(new PrintCommand(gb, isRunning));
+    _commands.push_back(new InsertCommand(gb, isRunning));
+    _commands.push_back(new SearchCommand(gb, isRunning));
+    _commands.push_back(new DeleteAtCommand(gb, isRunning));
+    _commands.push_back(new CutCommand(gb, isRunning));
+    _commands.push_back(new CopyCommand(gb, isRunning));
+    _commands.push_back(new PasteCommand(gb, isRunning));
+    _commands.push_back(new InsertWithReplaceCommand(gb, isRunning));
 }
 
-void CommandHandler::printHelp() {
-    std::cout << "Available commands:\n";
-    std::cout << "help - Print this help message\n";
-    std::cout << "exit - Exit the program\n";
-    std::cout << "append - Append text to the end of the buffer\n";
-    std::cout << "nl - Start a new line\n";
-    std::cout << "save - Save the buffer to a file\n";
-    std::cout << "load - Load a file into the buffer\n";
-    std::cout << "print - Print the contents of the buffer\n";
-    std::cout << "insert - Insert text at a specific line and index\n";
-    std::cout << "search - Search for text in the buffer\n";
-    std::cout << "clear - Clear the file contents\n";
-    std::cout << "delete - Delete text at a specific line and index\n";
-}
-
-void CommandHandler::help() {
+void CommandHandler::handleHelp() {
     printHelp();
 }
 
-void CommandHandler::unsavedChangesDialog() {
-    if (_gb->isSaved()) {
+void CommandHandler::handleUndo() {
+    if (_undoStack.empty()) {
+        std::cout << "Nothing to undo" << std::endl;
         return;
     }
 
-    printf("You have unsaved changes. Do you want to save them? (y/n) ");
-    char answer;
-    scanf(" %c", &answer);
-    if (tolower(answer) == 'y') {
-        if (const char *setFilePath = _gb->getFilePath(); setFilePath != nullptr) {
-            _gb->saveToFile(setFilePath);
-        } else {
-            char filename[256];
-            printf("Enter the file name for saving: ");
-            scanf("%s", filename);
-            _gb->saveToFile(filename);
-        }
-    }
+    IReversibleCommand *command = _undoStack.top();
+    _undoStack.pop();
+
+    command->undo();
+    _redoStack.push(command);
 }
 
-void CommandHandler::exitEditor() {
-    if (!_gb->isSaved()) {
-        unsavedChangesDialog();
+void CommandHandler::handleRedo() {
+    if (_redoStack.empty()) {
+        std::cout << "Nothing to redo" << std::endl;
+        return;
     }
 
-    *_isRunning = false;
+    IReversibleCommand *command = _redoStack.top();
+    _redoStack.pop();
+
+    command->redo();
+    _undoStack.push(command);
 }
 
-void CommandHandler::append() {
-    char text[256];
-    printf("Enter text to append: ");
-    scanf(" %[^\n]", text);
-    _gb->append(text);
-}
-
-void CommandHandler::newline() {
-    printf("New line is started\n");
-    _gb->append("\n");
-}
-
-void CommandHandler::save() {
-    char filename[256];
-    printf("Enter the file name for saving: ");
-    scanf("%s", filename);
-    _gb->saveToFile(filename);
-}
-
-void CommandHandler::load() {
-    if (!_gb->isSaved()) {
-        unsavedChangesDialog();
-    }
-
-    char filename[256];
-    printf("Enter the file name for loading:");
-    scanf("%s", filename);
-    _gb->loadFromFile(filename);
-}
-
-void CommandHandler::print() {
-    _gb->print();
-}
-
-void CommandHandler::insert() {
-    char text[256];
-    int line, index;
-    printf("Choose line and column (e.g. 8 2): ");
-    fflush(stdout);
-    scanf("%d %d", &line, &index);
-    printf("Enter text to insert: ");
-    scanf(" %[^\n]", text);
-    _gb->insertAt(line, index, text);
-}
-
-void CommandHandler::search() {
-    char text[256];
-    printf("Enter text to search: ");
-    scanf(" %[^\n]", text);
-    _gb->search(text);
-}
-
-void CommandHandler::clear() {
-    _gb->clear();
-}
-
-void CommandHandler::deleteAt() {
-    int line, index, length;
-    printf("Choose line, column and length (e.g. 8 2 5): ");
-    fflush(stdout);
-    scanf("%d %d %d", &line, &index, &length);
-    _gb->deleteAt(line, index, length);
-}
-
-CommandHandler::~CommandHandler() {
-    _commands.clear();
-}
 
 void CommandHandler::handle(const char *commandName) {
-    const int commands_count = _commands.size();
+    if (strcmp(commandName, "help") == 0) {
+        handleHelp();
+        return;
+    }
 
-    for (int i = 0; i < commands_count; i++) {
-        if (strcmp(commandName, _commands[i].name) == 0) {
-            _commands[i].func();
+    if (strcmp(commandName, "undo") == 0) {
+        handleUndo();
+        return;
+    }
+
+    if (strcmp(commandName, "redo") == 0) {
+        handleRedo();
+        return;
+    }
+
+    for (const auto &command : _commands) {
+        if (strcmp(commandName, command->getName()) == 0) {
+            command->execute();
+            if (command->breakUndoChain()) {
+                _undoStack = std::stack<IReversibleCommand *>();
+                return;
+            }
+            if (command->canundo()) {
+                _undoStack.push(dynamic_cast<IReversibleCommand *>(command));
+            }
             return;
         }
     }
-
-    printf("The command is not implemented yet :(\n");
+    std::cout << "ヽ༼⊙_⊙༽ﾉ Unknown command: " << commandName << std::endl;
     printHelp();
+}
+
+void CommandHandler::printHelp() const{
+    std::cout << "Available commands:" << std::endl;
+    std::cout << "help - print this help" << std::endl;
+    std::cout << "undo - undo the last command" << std::endl;
+    std::cout << "redo - redo the last undone command" << std::endl;
+
+    for (auto &command: _commands) {
+        std::cout << command->getName() << " - ";
+        command->printHelp();
+    }
+}
+
+
+CommandHandler::~CommandHandler() {
+    for (auto &command : _commands) {
+        delete command;
+    }
+
+    while (!_undoStack.empty()) {
+        delete _undoStack.top();
+        _undoStack.pop();
+    }
+
+    while (!_redoStack.empty()) {
+        delete _redoStack.top();
+        _redoStack.pop();
+    }
 }

@@ -2,41 +2,28 @@
 #ifndef COMMANDHANDLER_H
 #define COMMANDHANDLER_H
 #include <functional>
+#include <stack>
 
 #include "GapBuffer.h"
-
-typedef std::function<void()> CommandFunc;
-
-struct Command {
-    const char *name;
-    CommandFunc func;
-};
+#include "Commands.h"
 
 class CommandHandler {
 public:
     CommandHandler(GapBuffer *gb, bool *isRunning);
     void handle(const char *commandName);
-    static void printHelp() ;
+    void printHelp() const;
     ~CommandHandler();
 
 private:
     GapBuffer *_gb;
     bool *_isRunning;
-    std::vector<Command> _commands;
+    std::vector<ICommand *> _commands;
+    std::stack<IReversibleCommand *> _undoStack;
+    std::stack<IReversibleCommand *> _redoStack;
 
-    void help();
-    void exitEditor();
-    void unsavedChangesDialog();
-    void append();
-    void newline();
-    void save();
-    void load();
-    void print();
-    void insert();
-    void search();
-    void clear();
-    void deleteAt();
-
+    void handleHelp();
+    void handleUndo();
+    void handleRedo();
 };
 
 #endif //COMMANDHANDLER_H
