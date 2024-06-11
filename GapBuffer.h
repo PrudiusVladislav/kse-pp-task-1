@@ -20,6 +20,7 @@ public:
     void insertAt(int line, int index, const char *text);
     void search(const char *text) const;
     void clear();
+    ~GapBuffer();
 
     [[nodiscard]] bool isSaved() const;
     [[nodiscard]] char *getFilePath() const;

@@ -28,15 +28,16 @@ int main(void) {
         commandHandler->handle(command);
     }
 
-    // gap_buffer_append(gb, "\n");
-    // gap_buffer_append(gb, "line2");
-    // gap_buffer_insert_at(gb, 0, 0, "line1");
-    // gap_buffer_append(gb, "\n");
-    // gap_buffer_insert_at(gb, 2, 0, "line3");
-    // gap_buffer_print(gb);
-
-    gb->clear();
     delete gb;
     delete commandHandler;
     return 0;
+}
+
+void multiLineTestCase(GapBuffer *gb) {
+    gb->append("\n");
+    gb->append("line2");
+    gb->insertAt(0, 0, "line1");
+    gb->append("\n");
+    gb->insertAt(2, 0, "line3");
+    gb->print();
 }

@@ -33,7 +33,10 @@ private:
     void print();
     void insert();
     void search();
-    void clearСonsole();
+    void clear();
+
+    ~CommandHandler();
+
 };
 
 #endif //COMMANDHANDLER_H

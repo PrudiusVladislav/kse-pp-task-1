@@ -264,9 +264,15 @@ void GapBuffer::search(const char *text) const {
 }
 
 void GapBuffer::clear() {
-    delete[] _lineStarts;
+    _gap.from = 0;
+    _gap.to = _length;
+    _isSaved = true;
+}
+
+GapBuffer::~GapBuffer() {
     delete[] _buffer;
-    delete[] _filepath;
+    delete[] _lineStarts;
+    free(_filepath);
 }
 
 bool GapBuffer::isSaved() const {

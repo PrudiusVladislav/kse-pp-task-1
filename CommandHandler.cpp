@@ -17,7 +17,7 @@ CommandHandler::CommandHandler(GapBuffer *gb, bool *isRunning): _gb(gb), _isRunn
         {"print", std::bind(&CommandHandler::print, this)},
         {"insert", std::bind(&CommandHandler::insert, this)},
         {"search", std::bind(&CommandHandler::search, this)},
-        {"clear", std::bind(&CommandHandler::clearСonsole, this)}
+        {"clear", std::bind(&CommandHandler::clear, this)}
     };
 }
 
@@ -32,7 +32,7 @@ void CommandHandler::printHelp() {
     std::cout << "print - Print the contents of the buffer\n";
     std::cout << "insert - Insert text at a specific line and index\n";
     std::cout << "search - Search for text in the buffer\n";
-    std::cout << "clear - Clear the console\n";
+    std::cout << "clear - Clear the file contents\n";
 }
 
 void CommandHandler::help() {
@@ -119,8 +119,12 @@ void CommandHandler::search() {
     _gb->search(text);
 }
 
-void CommandHandler::clearСonsole() {
-    system("cls");
+void CommandHandler::clear() {
+    _gb->clear();
+}
+
+CommandHandler::~CommandHandler() {
+    _commands.clear();
 }
 
 void CommandHandler::handle(const char *commandName) {
