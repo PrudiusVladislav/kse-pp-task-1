@@ -10,7 +10,7 @@ void unsavedChangesDialog(GapBuffer *gb) {
         return;
     }
 
-    std::cout << "You have unsaved changes. Do you want to save them? (y/n) " << std::endl;
+    std::cout << "You have unsaved changes. Do you want to save them? (y/n): " << std::flush;
     char answer;
     scanf(" %c", &answer);
     if (tolower(answer) == 'y') {
@@ -18,7 +18,7 @@ void unsavedChangesDialog(GapBuffer *gb) {
             gb->saveToFile(setFilePath);
         } else {
             char filename[256];
-            std::cout << "Enter the file name for saving: " << std::endl;
+            std::cout << "Enter the file name for saving: " << std::flush;
             scanf("%s", filename);
             gb->saveToFile(filename);
         }
@@ -38,7 +38,7 @@ void ExitCommand::printHelp() const {
 }
 
 void AppendCommand::execute() {
-    std::cout << "Enter text to append: " << std::endl;
+    std::cout << "Enter text to append: " << std::flush;
     scanf(" %[^\n]", _appendedText);
     _gapBuffer->append(_appendedText);
 }
@@ -82,8 +82,17 @@ void NewlineCommand::printHelp() const {
 }
 
 void SaveCommand::execute() {
+    if (_gapBuffer->isSaved()) {
+        return;
+    }
+
+    if (const char *setFilePath = _gapBuffer->getFilePath(); setFilePath != nullptr) {
+        _gapBuffer->saveToFile(setFilePath);
+        return;
+    }
+
     char filename[256];
-    std::cout << "Enter the file name for saving: " << std::endl;
+    std::cout << "Enter the file name for saving: " << std::flush;
     scanf("%s", filename);
     _gapBuffer->saveToFile(filename);
 }
@@ -98,7 +107,7 @@ void LoadCommand::execute() {
     }
 
     char filename[256];
-    std::cout << "Enter the file name for loading: " << std::endl;
+    std::cout << "Enter the file name for loading: " << std::flush;
     scanf("%s", filename);
     _gapBuffer->loadFromFile(filename);
 }
@@ -116,9 +125,9 @@ void PrintCommand::printHelp() const {
 }
 
 void InsertCommand::execute() {
-    std::cout << "Enter line and index to insert text (e.g. 8 2): " << std::endl;
+    std::cout << "Enter line and index to insert text (e.g. 8 2): " << std::flush;
     scanf("%d %d", &_position.line, &_position.index);
-    std::cout << "Enter text to insert: " << std::endl;
+    std::cout << "Enter text to insert: " << std::flush;
     scanf(" %[^\n]", _text);
     _gapBuffer->insertAt(_position, _text);
 }
@@ -141,7 +150,7 @@ InsertCommand::~InsertCommand() {
 
 void SearchCommand::execute() {
     char text[256];
-    std::cout << "Enter text to search: " << std::endl;
+    std::cout << "Enter text to search: " << std::flush;
     scanf(" %[^\n]", text);
     _gapBuffer->search(text);
 }
@@ -151,7 +160,7 @@ void SearchCommand::printHelp() const {
 }
 
 void DeleteAtCommand::execute() {
-    std::cout << "Enter line, index and length to delete text (e.g. 8 2 5): " << std::endl;
+    std::cout << "Enter line, index and length to delete text (e.g. 8 2 5): " << std::flush;
     scanf("%d %d %d", &_position.line, &_position.index, &_length);
     _deletedText = _gapBuffer->remove(_position, _length);
 }
@@ -175,7 +184,7 @@ DeleteAtCommand::~DeleteAtCommand() {
 
 void CutCommand::execute() {
     int length;
-    std::cout << "Enter line, index and length to cut text (e.g. 8 2 5): " << std::endl;
+    std::cout << "Enter line, index and length to cut text (e.g. 8 2 5): " << std::flush;
     scanf("%d %d %d", &_position.line, &_position.index, &length);
     _cutText = _gapBuffer->cut(_position, length);
 }
@@ -199,7 +208,7 @@ CutCommand::~CutCommand() {
 
 void CopyCommand::execute() {
     int length;
-    std::cout << "Enter line, index and length to copy text (e.g. 8 2 5): " << std::endl;
+    std::cout << "Enter line, index and length to copy text (e.g. 8 2 5): " << std::flush;
     scanf("%d %d %d", &_position.line, &_position.index, &length);
     _gapBuffer->copy(_position, length);
 }
@@ -209,7 +218,7 @@ void CopyCommand::printHelp() const {
 }
 
 void PasteCommand::execute() {
-    std::cout << "Choose line and column to paste text (e.g. 8 2): " << std::endl;
+    std::cout << "Choose line and column to paste text (e.g. 8 2): " << std::flush;
     scanf("%d %d", &_position.line, &_position.index);
     _pastedText = _gapBuffer->paste(_position);
 }
@@ -231,7 +240,7 @@ PasteCommand::~PasteCommand() {
 }
 
 void InsertWithReplaceCommand::execute() {
-    std::cout << "Choose line and column to insert text (e.g. 8 2): " << std::endl;
+    std::cout << "Choose line and column to insert text (e.g. 8 2): " << std::flush;
     scanf("%d %d", &_position.line, &_position.index);
     std::cout << "Enter text to insert: " << std::endl;
     scanf(" %[^\n]", _insertedText);

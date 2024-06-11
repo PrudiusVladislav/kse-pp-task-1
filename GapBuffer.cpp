@@ -165,17 +165,17 @@ void GapBuffer::append(const char *text) {
 
 void GapBuffer::print() const{
     if (getContentLength() == 0) {
-        printf("Buffer is empty :(\n");
+        std::cout << "Buffer is empty :(" << std::endl;
         return;
     }
 
     for (int i = 0; i < _gap.from; i++) {
-        printf("%c", _buffer[i]);
+        std::cout << _buffer[i] << std::flush;
     }
     for (int i = _gap.to; i < _length; i++) {
-        printf("%c", _buffer[i]);
+        std::cout << _buffer[i] << std::flush;
     }
-    printf("\n");
+    std::cout << std::endl;
 }
 
 
@@ -191,10 +191,10 @@ void GapBuffer::saveToFile(const char *filename) {
         fclose(file);
         _isSaved = true;
 
-        printf("Text has been saved successfully\n");
+        std::cout << "Text has been saved successfully" << std::endl;
         setFilePath(filename);
     } else {
-        printf("Error opening file for writing\n");
+        std::cout << "Error opening file for writing" << std::endl;
     }
 }
 
@@ -239,16 +239,16 @@ void GapBuffer::loadFromFile(const char *filename) {
 
         populateLineStarts();
 
-        printf("Text has been loaded successfully\n");
+        std::cout << "Text has been loaded successfully" << std::endl;
         setFilePath(filename);
     } else {
-        printf("Error opening file for reading\n");
+        std::cout << "Error opening file for reading" << std::endl;
     }
 }
 
 void GapBuffer::insertAt(Position position, const char *text) {
     if (position.line < 0 || position.line >= _linesCount) {
-        printf("Invalid line number\n");
+        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
         return;
     }
 
@@ -278,15 +278,22 @@ void GapBuffer::insertAt(Position position, const char *text) {
 void GapBuffer::search(const char *text) const {
     const int textLength = strlen(text);
     for (int i = 0; i <= _gap.from - textLength; i++) {
-        if (strncmp(_buffer + i, text, textLength) == 0) {
-            printf("Text is present in this position: %d %d\n", 0, i);
+        if (strncmp(_buffer + i, text, textLength) != 0) {
+            continue;
         }
+
+        const auto [line, index] = getPositionFromIndex(i);
+        std::cout << "Text is present in this position (line, index): "
+        << line << ", " << index << std::endl;
     }
     for (int i = _gap.to; i <= _length - textLength; i++) {
-        if (strncmp(_buffer + i, text, textLength) == 0) {
-            printf("Text is present in this position: %d %d\n",
-                0, i - (_gap.to - _gap.from));
+        if (strncmp(_buffer + i, text, textLength) != 0) {
+            continue;
         }
+
+        const auto [line, index] = getPositionFromIndex(i);
+        std::cout << "Text is present in this position (line, index): "
+        << line << ", " << index << std::endl;
     }
 }
 
@@ -309,6 +316,7 @@ char *GapBuffer::remove(Position position, const int length) {
 
     char * deletedText = new char[deleteLength + 1];
     strncpy(deletedText, _buffer + _gap.to, deleteLength);
+    deletedText[deleteLength] = '\0';
     _gap.to += deleteLength;
     for (int i = position.line + 1; i < _linesCount; i++) {
         _lineStarts[i].position -= deleteLength;

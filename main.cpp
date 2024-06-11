@@ -11,7 +11,7 @@
 
 char *promptForInputCommand() {
     char *command = StringUtils::CreateString(256);
-    printf("[cpp-editor]--->");
+    std::cout << "[cpp-editor]---> " << std::flush;
     scanf("%s", command);
     return StringUtils::ToLower(StringUtils::Trim(command));
 }
@@ -46,6 +46,11 @@ int main(void) {
     // gb->cut({ 0, 0 }, 3);
     // gb->print();
 
+    // gb->append("new");
+    // gb->cut({0,0}, 1);
+    // gb->paste({0,0});
+    // gb->print();
+
     commandHandler->printHelp();
 
     while (isRunning) {
@@ -54,7 +59,7 @@ int main(void) {
         delete[] command;
     }
 
-    delete gb;
     delete commandHandler;
+    delete gb;
     return 0;
 }
