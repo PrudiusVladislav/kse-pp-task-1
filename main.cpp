@@ -26,6 +26,7 @@ int main(void) {
     while (isRunning) {
         const char *command = promptForInputCommand();
         commandHandler->handle(command);
+        delete[] command;
     }
 
     delete gb;
