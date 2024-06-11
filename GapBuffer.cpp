@@ -74,7 +74,7 @@ void GapBuffer::expand(const int additionalLength) {
     _gap.to = newLength - lengthAfterGap;
     _length = newLength;
 
-    delete[] _buffer;
+    // delete[] _buffer;
     _buffer = newBuffer;
 }
 
@@ -292,7 +292,7 @@ void GapBuffer::search(const char *text) const {
 
 char *GapBuffer::remove(Position position, const int length) {
     if (position.line < 0 || position.line >= _linesCount) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ\n" << std::endl;
+        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
         return nullptr;
     }
 
@@ -318,14 +318,18 @@ char *GapBuffer::remove(Position position, const int length) {
 }
 
 char *GapBuffer::cut(Position position, int length) {
-    delete[] _copiedText;
+    if (!isPositionValid(position)) {
+        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        return nullptr;
+    }
+
     _copiedText = remove(position, length);
     return _copiedText;
 }
 
 char *GapBuffer::copy(Position position, int length) {
     if (!isPositionValid(position)) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ\n" << std::endl;
+        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
         return nullptr;
     }
 
@@ -333,7 +337,6 @@ char *GapBuffer::copy(Position position, int length) {
     moveGapTo(positionIndex);
     const int copiedLength = std::min(length, _length - _gap.to);
 
-    delete[] _copiedText;
     _copiedText = StringUtils::CreateString(length);
     strncpy(_copiedText, _buffer + positionIndex, copiedLength);
     return _copiedText;
@@ -341,12 +344,12 @@ char *GapBuffer::copy(Position position, int length) {
 
 char *GapBuffer::paste(Position position) {
     if (!isPositionValid(position)) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ\n" << std::endl;
+        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
         return nullptr;
     }
 
     if (_copiedText == nullptr) {
-        printf("No text to paste ヽ༼⊙_⊙༽ﾉ\n");
+        std::cout << "No text to paste ヽ༼⊙_⊙༽ﾉ" << std::endl;
         return nullptr;
     }
 
@@ -356,7 +359,7 @@ char *GapBuffer::paste(Position position) {
 
 char *GapBuffer::insertWithReplace(Position position, const char *text) {
     if (!isPositionValid(position)) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ\n" << std::endl;
+        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
         return nullptr;
     }
 
