@@ -17,6 +17,7 @@ public:
     CommandHandler(GapBuffer *gb, bool *isRunning);
     void handle(const char *commandName);
     static void printHelp() ;
+    ~CommandHandler();
 
 private:
     GapBuffer *_gb;
@@ -34,8 +35,7 @@ private:
     void insert();
     void search();
     void clear();
-
-    ~CommandHandler();
+    void deleteAt();
 
 };
 

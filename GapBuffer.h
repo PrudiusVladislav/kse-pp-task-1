@@ -20,6 +20,14 @@ public:
     void insertAt(int line, int index, const char *text);
     void search(const char *text) const;
     void clear();
+    void deleteAt(int line, int index, int length);
+    void undo();
+    void redo();
+    void cut(int line, int index, int length);
+    void copy(int line, int index, int length);
+    void paste(int line, int index);
+    void insertWithReplace(int line, int index, const char *text);
+    void moveCursor(int line, int index);
     ~GapBuffer();
 
     [[nodiscard]] bool isSaved() const;

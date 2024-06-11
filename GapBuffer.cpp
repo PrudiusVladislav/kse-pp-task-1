@@ -75,14 +75,14 @@ void GapBuffer::updateLineStarts(const int position, const bool isInsert) {
         _lineStarts[i].position = position;
         _linesCount++;
     } else {
-        int i;
-        for (i = 0; i < _linesCount && _lineStarts[i].position != position; i++){}
-        if (i < _linesCount) {
-            for (; i < _linesCount - 1; i++) {
-                _lineStarts[i] = _lineStarts[i + 1];
-            }
-            _linesCount--;
+        int i = 0;
+        while (i < _linesCount && _lineStarts[i].position < position) {
+            i++;
         }
+        for (int j = i; j < _linesCount - 1; j++) {
+            _lineStarts[j] = _lineStarts[j + 1];
+        }
+        _linesCount--;
     }
 }
 
@@ -267,6 +267,29 @@ void GapBuffer::clear() {
     _gap.from = 0;
     _gap.to = _length;
     _isSaved = true;
+}
+
+void GapBuffer::deleteAt(const int line, const int index, const int length) {
+    if (line < 0 || line >= _linesCount) {
+        printf("Invalid line number\n");
+        return;
+    }
+
+    const int position = _lineStarts[line].position + index;
+    moveGapTo(position);
+
+    const int deleteLength = std::min(length, _length - _gap.to);
+
+    for (int i = _gap.to; i < _gap.to + deleteLength; i++) {
+        if (_buffer[i] == '\n') {
+            updateLineStarts(i, false);
+        }
+    }
+
+    _gap.to += deleteLength;
+    for (int i = line + 1; i < _linesCount; i++) {
+        _lineStarts[i].position -= deleteLength;
+    }
 }
 
 GapBuffer::~GapBuffer() {

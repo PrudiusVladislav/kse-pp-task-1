@@ -17,7 +17,8 @@ CommandHandler::CommandHandler(GapBuffer *gb, bool *isRunning): _gb(gb), _isRunn
         {"print", std::bind(&CommandHandler::print, this)},
         {"insert", std::bind(&CommandHandler::insert, this)},
         {"search", std::bind(&CommandHandler::search, this)},
-        {"clear", std::bind(&CommandHandler::clear, this)}
+        {"clear", std::bind(&CommandHandler::clear, this)},
+        {"delete", std::bind(&CommandHandler::deleteAt, this)}
     };
 }
 
@@ -33,6 +34,7 @@ void CommandHandler::printHelp() {
     std::cout << "insert - Insert text at a specific line and index\n";
     std::cout << "search - Search for text in the buffer\n";
     std::cout << "clear - Clear the file contents\n";
+    std::cout << "delete - Delete text at a specific line and index\n";
 }
 
 void CommandHandler::help() {
@@ -121,6 +123,14 @@ void CommandHandler::search() {
 
 void CommandHandler::clear() {
     _gb->clear();
+}
+
+void CommandHandler::deleteAt() {
+    int line, index, length;
+    printf("Choose line, column and length (e.g. 8 2 5): ");
+    fflush(stdout);
+    scanf("%d %d %d", &line, &index, &length);
+    _gb->deleteAt(line, index, length);
 }
 
 CommandHandler::~CommandHandler() {
