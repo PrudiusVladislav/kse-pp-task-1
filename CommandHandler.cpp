@@ -7,19 +7,19 @@
 
 
 CommandHandler::CommandHandler(GapBuffer *gb, bool *isRunning) : _gb(gb), _isRunning(isRunning) {
-    _commands.push_back(new ExitCommand(gb, isRunning));
-    _commands.push_back(new AppendCommand(gb, isRunning));
-    _commands.push_back(new NewlineCommand(gb, isRunning));
-    _commands.push_back(new SaveCommand(gb, isRunning));
-    _commands.push_back(new LoadCommand(gb, isRunning));
-    _commands.push_back(new PrintCommand(gb, isRunning));
-    _commands.push_back(new InsertCommand(gb, isRunning));
-    _commands.push_back(new SearchCommand(gb, isRunning));
-    _commands.push_back(new DeleteAtCommand(gb, isRunning));
-    _commands.push_back(new CutCommand(gb, isRunning));
-    _commands.push_back(new CopyCommand(gb, isRunning));
-    _commands.push_back(new PasteCommand(gb, isRunning));
-    _commands.push_back(new InsertWithReplaceCommand(gb, isRunning));
+    _commands.push_back(new ExitCommand());
+    _commands.push_back(new AppendCommand());
+    _commands.push_back(new NewlineCommand());
+    _commands.push_back(new SaveCommand());
+    _commands.push_back(new LoadCommand());
+    _commands.push_back(new PrintCommand());
+    _commands.push_back(new InsertCommand());
+    _commands.push_back(new SearchCommand());
+    _commands.push_back(new DeleteAtCommand());
+    _commands.push_back(new CutCommand());
+    _commands.push_back(new CopyCommand());
+    _commands.push_back(new PasteCommand());
+    _commands.push_back(new InsertWithReplaceCommand());
 }
 
 void CommandHandler::handleHelp() {
@@ -71,14 +71,17 @@ void CommandHandler::handle(const char *commandName) {
 
     for (const auto &command : _commands) {
         if (strcmp(commandName, command->getName()) == 0) {
-            command->execute();
-            if (command->breakUndoChain()) {
+            ICommand *cmd = command->create(_gb, _isRunning);
+            cmd->execute();
+            if (cmd->breakUndoChain()) {
                 _undoStack = std::stack<IReversibleCommand *>();
                 return;
             }
-            if (command->canundo()) {
-                _undoStack.push(dynamic_cast<IReversibleCommand *>(command));
+            if (cmd->canundo()) {
+                _undoStack.push(dynamic_cast<IReversibleCommand *>(cmd));
+                return;
             }
+            delete cmd;
             return;
         }
     }
@@ -100,10 +103,6 @@ void CommandHandler::printHelp() const{
 
 
 CommandHandler::~CommandHandler() {
-    for (auto &command : _commands) {
-        delete command;
-    }
-
     while (!_undoStack.empty()) {
         delete _undoStack.top();
         _undoStack.pop();
@@ -112,5 +111,9 @@ CommandHandler::~CommandHandler() {
     while (!_redoStack.empty()) {
         delete _redoStack.top();
         _redoStack.pop();
+    }
+
+    for (auto &command : _commands) {
+        delete command;
     }
 }

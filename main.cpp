@@ -25,7 +25,7 @@ void multiLineTestCase(GapBuffer *gb) {
     gb->print();
 }
 
-int main(void) {
+int main() {
     auto *gb = new GapBuffer();
     bool isRunning = true;
     auto *commandHandler = new CommandHandler(gb, &isRunning);
