@@ -51,6 +51,7 @@ int main() {
     // gb->paste({0,0});
     // gb->print();
 
+
     commandHandler->printHelp();
 
     while (isRunning) {

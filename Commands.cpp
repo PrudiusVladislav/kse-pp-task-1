@@ -46,7 +46,7 @@ void AppendCommand::execute() {
 void AppendCommand::undo() {
     const int appendedLength = strlen(_appendedText);
     const Position position = _gapBuffer->getPositionFromIndex(
-        _gapBuffer->getContentLength() - appendedLength - 1);
+        _gapBuffer->getContentLength() - appendedLength);
 
     _gapBuffer->remove(position, appendedLength);
 }
@@ -57,10 +57,6 @@ void AppendCommand::redo() {
 
 void AppendCommand::printHelp() const {
     std::cout << "append text to the end of the buffer" << std::endl;
-}
-
-AppendCommand::~AppendCommand() {
-    delete[] _appendedText;
 }
 
 void NewlineCommand::execute() {
@@ -142,10 +138,6 @@ void InsertCommand::redo() {
 
 void InsertCommand::printHelp() const {
     std::cout << "insert text at a specific line and index" << std::endl;
-}
-
-InsertCommand::~InsertCommand() {
-    delete[] _text;
 }
 
 void SearchCommand::execute() {

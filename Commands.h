@@ -52,7 +52,6 @@ public:
     ICommand *create(GapBuffer *gapBuffer, bool *isRunning) override {
         return new AppendCommand(gapBuffer, isRunning);
     }
-    ~AppendCommand() override;
 private:
     char _appendedText[256];
 };
@@ -121,7 +120,6 @@ public:
     ICommand *create(GapBuffer *gapBuffer, bool *isRunning) override {
         return new InsertCommand(gapBuffer, isRunning);
     }
-    ~InsertCommand() override;
 private:
     Position _position;
     char _text[256];
