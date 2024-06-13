@@ -248,7 +248,7 @@ void GapBuffer::loadFromFile(const char *filename) {
 
 void GapBuffer::insertAt(Position position, const char *text) {
     if (position.line < 0 || position.line >= _linesCount) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        std::cout << "Invalid line number" << std::endl;
         return;
     }
 
@@ -299,7 +299,7 @@ void GapBuffer::search(const char *text) const {
 
 char *GapBuffer::remove(Position position, const int length) {
     if (position.line < 0 || position.line >= _linesCount) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        std::cout << "Invalid line number" << std::endl;
         return nullptr;
     }
 
@@ -327,7 +327,7 @@ char *GapBuffer::remove(Position position, const int length) {
 
 char *GapBuffer::cut(Position position, int length) {
     if (!isPositionValid(position)) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        std::cout << "Invalid line number" << std::endl;
         return nullptr;
     }
 
@@ -337,7 +337,7 @@ char *GapBuffer::cut(Position position, int length) {
 
 char *GapBuffer::copy(Position position, int length) {
     if (!isPositionValid(position)) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        std::cout << "Invalid line number" << std::endl;
         return nullptr;
     }
 
@@ -352,12 +352,12 @@ char *GapBuffer::copy(Position position, int length) {
 
 char *GapBuffer::paste(Position position) {
     if (!isPositionValid(position)) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        std::cout << "Invalid line number" << std::endl;
         return nullptr;
     }
 
     if (_copiedText == nullptr) {
-        std::cout << "No text to paste ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        std::cout << "No text to paste" << std::endl;
         return nullptr;
     }
 
@@ -367,7 +367,7 @@ char *GapBuffer::paste(Position position) {
 
 char *GapBuffer::insertWithReplace(Position position, const char *text) {
     if (!isPositionValid(position)) {
-        std::cout << "Invalid line number ヽ༼⊙_⊙༽ﾉ" << std::endl;
+        std::cout << "Invalid line number" << std::endl;
         return nullptr;
     }
 

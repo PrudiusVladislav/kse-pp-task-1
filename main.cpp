@@ -1,6 +1,5 @@
 #include <cctype>
 #include <cstdio>
-#include <cstdlib>
 #include <string>
 #include <iostream>
 
@@ -29,28 +28,6 @@ int main() {
     auto *gb = new GapBuffer();
     bool isRunning = true;
     auto *commandHandler = new CommandHandler(gb, &isRunning);
-
-    // const char *text = new char[10];
-    // delete[] text;
-    // text = new char[10];
-    // strcpy(const_cast<char *>(text), "hello!");
-    // std::cout << text << std::endl;
-
-    // gb->append("test");
-    // const char *copiedText = gb->copy({0 ,0}, 2);
-    // std::cout << "Copied text: " << copiedText << std::endl;
-
-    // gb->append("new test!");
-    // gb->print();
-    // // gb->insertWithReplace({0, 0}, "the");
-    // gb->cut({ 0, 0 }, 3);
-    // gb->print();
-
-    // gb->append("new");
-    // gb->cut({0,0}, 1);
-    // gb->paste({0,0});
-    // gb->print();
-
 
     commandHandler->printHelp();
 

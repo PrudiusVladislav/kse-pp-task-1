@@ -85,7 +85,7 @@ void CommandHandler::handle(const char *commandName) {
             return;
         }
     }
-    std::cout << "ヽ༼⊙_⊙༽ﾉ Unknown command: " << commandName << std::endl;
+    std::cout << "Unknown command: " << commandName << std::endl;
     printHelp();
 }
 
