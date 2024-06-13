@@ -220,8 +220,8 @@ public:
     }
     ~InsertWithReplaceCommand() override;
 private:
-    Position _position;
     int _insertIndex;
+    char _insertedText[256];
     char *_replacedText;
 };
 

@@ -256,8 +256,6 @@ void InsertWithReplaceCommand::execute() {
 }
 
 void InsertWithReplaceCommand::undo() {
-    _gapBuffer->remove(_position, strlen(_insertedText));
-    _gapBuffer->insertAt(_position, _replacedText);
     _gapBuffer->moveGapTo(_insertIndex);
     _gapBuffer->remove(strlen(_insertedText));
     _gapBuffer->insertAt(_replacedText);
@@ -274,7 +272,6 @@ void InsertWithReplaceCommand::printHelp() const {
 
 InsertWithReplaceCommand::~InsertWithReplaceCommand() {
     delete[] _replacedText;
-    delete[] _insertedText;
 }
 
 void MoveCursonCommand::execute() {
