@@ -18,9 +18,11 @@ char *promptForInputCommand() {
 void multiLineTestCase(GapBuffer *gb) {
     gb->append("\n");
     gb->append("line2");
-    gb->insertAt({0, 0}, "line1");
+    gb->moveGapTo(0);
+    gb->insertAt("line1");
     gb->append("\n");
-    gb->insertAt({2, 0}, "line3");
+    gb->moveGapTo(gb->getIndexFromPosition({2, 0}));
+    gb->insertAt("line3");
     gb->print();
 }
 

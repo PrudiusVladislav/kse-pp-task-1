@@ -121,7 +121,7 @@ public:
         return new InsertCommand(gapBuffer, isRunning);
     }
 private:
-    Position _position;
+    int _insertIndex;
     char _text[256];
 };
 
@@ -151,7 +151,7 @@ public:
     }
     ~DeleteAtCommand() override;
 private:
-    Position _position;
+    int _deleteIndex;
     int _length;
     char *_deletedText;
 };
@@ -170,7 +170,7 @@ public:
     }
     ~CutCommand() override;
 private:
-    Position _position;
+    int _cutIndex;
     char *_cutText;
 };
 
@@ -185,7 +185,7 @@ public:
         return new CopyCommand(gapBuffer, isRunning);
     }
 private:
-    Position _position;
+    int _copyIndex;
 };
 
 class PasteCommand final : public IReversibleCommand {
@@ -202,7 +202,7 @@ public:
     }
     ~PasteCommand() override;
 private:
-    Position _position;
+    int _pasteIndex;
     char *_pastedText;
 };
 
@@ -221,8 +221,20 @@ public:
     ~InsertWithReplaceCommand() override;
 private:
     Position _position;
+    int _insertIndex;
     char *_replacedText;
-    char *_insertedText;
+};
+
+class MoveCursonCommand final : public ICommand {
+public:
+    MoveCursonCommand() = default;
+    MoveCursonCommand(GapBuffer *gapBuffer, bool *isRunning) : ICommand(gapBuffer, isRunning) {}
+    [[nodiscard]] const char *getName() const override { return "move"; }
+    void execute() override;
+    void printHelp() const override;
+    ICommand *create(GapBuffer *gapBuffer, bool *isRunning) override {
+        return new MoveCursonCommand(gapBuffer, isRunning);
+    }
 };
 
 #endif //COMMANDS_H

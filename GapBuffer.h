@@ -1,6 +1,5 @@
 #ifndef GAP_BUFFER_H
 #define GAP_BUFFER_H
-#include <tuple>
 
 
 struct GapWindow {
@@ -24,19 +23,22 @@ public:
     void print() const;
     void saveToFile(const char *filename);
     void loadFromFile(const char *filename);
-    void insertAt(Position position, const char *text);
+    void insertAt(const char *text);
     void search(const char *text) const;
-    char *remove(Position position, int length);
-    char *cut(Position position, int length);
-    char *copy(Position position, int length);
-    char *paste(Position position);
-    char *insertWithReplace(Position position, const char *text);
+    char *remove(int length);
+    char *cut(int length);
+    char *copy(int length);
+    char *paste();
+    char *insertWithReplace(const char *text);
+    void moveGapTo(int position);
     ~GapBuffer();
 
     [[nodiscard]] bool isSaved() const;
     [[nodiscard]] char *getFilePath() const;
     [[nodiscard]] int getContentLength() const;
     [[nodiscard]] Position getPositionFromIndex(int index) const;
+    [[nodiscard]] int getIndexFromPosition(Position position) const;
+    [[nodiscard]] Position getCursorPosition() const;
 
 private:
     int _length;
@@ -48,13 +50,12 @@ private:
     int _linesCount;
     int _lineStartsCapacity;
     char *_copiedText;
+    Position _cursorPosition;
 
     int getWindowLength() const;
-    int getIndexFromPosition(Position position) const;
     bool isPositionValid(Position position) const;
     void expand(int additionalLength);
     void updateLineStarts(int position, bool isInsert);
-    void moveGapTo(int position);
     void setFilePath(const char *filename);
     void populateLineStarts();
 };

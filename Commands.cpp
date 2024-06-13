@@ -45,10 +45,10 @@ void AppendCommand::execute() {
 
 void AppendCommand::undo() {
     const int appendedLength = strlen(_appendedText);
-    const Position position = _gapBuffer->getPositionFromIndex(
-        _gapBuffer->getContentLength() - appendedLength);
+    const int appendedTextIndex = _gapBuffer->getContentLength() - appendedLength;
 
-    _gapBuffer->remove(position, appendedLength);
+    _gapBuffer->moveGapTo(appendedTextIndex);
+    _gapBuffer->remove(appendedLength);
 }
 
 void AppendCommand::redo() {
@@ -65,8 +65,10 @@ void NewlineCommand::execute() {
 }
 
 void NewlineCommand::undo() {
-    const Position position = _gapBuffer->getPositionFromIndex(_gapBuffer->getContentLength() - 1 - 1);
-    _gapBuffer->remove(position, 1);
+    const int lastCharIndex = _gapBuffer->getContentLength() - 1 - 1;
+
+    _gapBuffer->moveGapTo(lastCharIndex);
+    _gapBuffer->remove(1);
 }
 
 void NewlineCommand::redo() {
@@ -121,19 +123,21 @@ void PrintCommand::printHelp() const {
 }
 
 void InsertCommand::execute() {
-    std::cout << "Enter line and index to insert text (e.g. 8 2): " << std::flush;
-    scanf("%d %d", &_position.line, &_position.index);
     std::cout << "Enter text to insert: " << std::flush;
     scanf(" %[^\n]", _text);
-    _gapBuffer->insertAt(_position, _text);
+
+    _insertIndex = _gapBuffer->getIndexFromPosition(_gapBuffer->getCursorPosition());
+    _gapBuffer->insertAt(_text);
 }
 
 void InsertCommand::undo() {
-    _gapBuffer->remove(_position, strlen(_text));
+    _gapBuffer->moveGapTo(_insertIndex);
+    _gapBuffer->remove(strlen(_text));
 }
 
 void InsertCommand::redo() {
-    _gapBuffer->insertAt(_position, _text);
+    _gapBuffer->moveGapTo(_insertIndex);
+    _gapBuffer->insertAt(_text);
 }
 
 void InsertCommand::printHelp() const {
@@ -152,18 +156,23 @@ void SearchCommand::printHelp() const {
 }
 
 void DeleteAtCommand::execute() {
-    std::cout << "Enter line, index and length to delete text (e.g. 8 2 5): " << std::flush;
-    scanf("%d %d %d", &_position.line, &_position.index, &_length);
-    _deletedText = _gapBuffer->remove(_position, _length);
+    std::cout << "Enter length of the text to delete: " << std::flush;
+    scanf("%d", &_length);
+
+    _deleteIndex = _gapBuffer->getIndexFromPosition(_gapBuffer->getCursorPosition());
+    _deletedText = _gapBuffer->remove(_length);
 }
 
 void DeleteAtCommand::undo() {
-    _gapBuffer->insertAt(_position, _deletedText);
+    _gapBuffer->moveGapTo(_deleteIndex);
+    _gapBuffer->insertAt(_deletedText);
+
     delete[] _deletedText;
 }
 
 void DeleteAtCommand::redo() {
-    _deletedText = _gapBuffer->remove(_position, _length);
+    _gapBuffer->moveGapTo(_deleteIndex);
+    _deletedText = _gapBuffer->remove(_length);
 }
 
 void DeleteAtCommand::printHelp() const {
@@ -176,18 +185,22 @@ DeleteAtCommand::~DeleteAtCommand() {
 
 void CutCommand::execute() {
     int length;
-    std::cout << "Enter line, index and length to cut text (e.g. 8 2 5): " << std::flush;
-    scanf("%d %d %d", &_position.line, &_position.index, &length);
-    _cutText = _gapBuffer->cut(_position, length);
+    std::cout << "Enter the length of the text to cut: " << std::flush;
+    scanf("%d", &length);
+
+    _cutIndex = _gapBuffer->getIndexFromPosition(_gapBuffer->getCursorPosition());
+    _cutText = _gapBuffer->cut(length);
 }
 
 void CutCommand::undo() {
-    _gapBuffer->insertAt(_position, _cutText);
+    _gapBuffer->moveGapTo(_cutIndex);
+    _gapBuffer->insertAt(_cutText);
     delete[] _cutText;
 }
 
 void CutCommand::redo() {
-    _cutText = _gapBuffer->cut(_position, strlen(_cutText));
+    _gapBuffer->moveGapTo(_cutIndex);
+    _cutText = _gapBuffer->cut(strlen(_cutText));
 }
 
 void CutCommand::printHelp() const {
@@ -200,9 +213,11 @@ CutCommand::~CutCommand() {
 
 void CopyCommand::execute() {
     int length;
-    std::cout << "Enter line, index and length to copy text (e.g. 8 2 5): " << std::flush;
-    scanf("%d %d %d", &_position.line, &_position.index, &length);
-    _gapBuffer->copy(_position, length);
+    std::cout << "Enter the length of the text to copy: " << std::flush;
+    scanf("%d", &length);
+
+    _copyIndex = _gapBuffer->getIndexFromPosition(_gapBuffer->getCursorPosition());
+    _gapBuffer->copy(length);
 }
 
 void CopyCommand::printHelp() const {
@@ -210,17 +225,18 @@ void CopyCommand::printHelp() const {
 }
 
 void PasteCommand::execute() {
-    std::cout << "Choose line and column to paste text (e.g. 8 2): " << std::flush;
-    scanf("%d %d", &_position.line, &_position.index);
-    _pastedText = _gapBuffer->paste(_position);
+    _pasteIndex = _gapBuffer->getIndexFromPosition(_gapBuffer->getCursorPosition());
+    _pastedText = _gapBuffer->paste();
 }
 
 void PasteCommand::undo() {
-    _gapBuffer->remove(_position, strlen(_pastedText));
+    _gapBuffer->moveGapTo(_pasteIndex);
+    _gapBuffer->remove(strlen(_pastedText));
 }
 
 void PasteCommand::redo() {
-    _gapBuffer->insertAt(_position, _pastedText);
+    _gapBuffer->moveGapTo(_pasteIndex);
+    _gapBuffer->insertAt(_pastedText);
 }
 
 void PasteCommand::printHelp() const {
@@ -232,20 +248,24 @@ PasteCommand::~PasteCommand() {
 }
 
 void InsertWithReplaceCommand::execute() {
-    std::cout << "Choose line and column to insert text (e.g. 8 2): " << std::flush;
-    scanf("%d %d", &_position.line, &_position.index);
     std::cout << "Enter text to insert: " << std::endl;
     scanf(" %[^\n]", _insertedText);
-    _replacedText = _gapBuffer->insertWithReplace(_position, _insertedText);
+
+    _insertIndex = _gapBuffer->getIndexFromPosition(_gapBuffer->getCursorPosition());
+    _replacedText = _gapBuffer->insertWithReplace(_insertedText);
 }
 
 void InsertWithReplaceCommand::undo() {
     _gapBuffer->remove(_position, strlen(_insertedText));
     _gapBuffer->insertAt(_position, _replacedText);
+    _gapBuffer->moveGapTo(_insertIndex);
+    _gapBuffer->remove(strlen(_insertedText));
+    _gapBuffer->insertAt(_replacedText);
 }
 
 void InsertWithReplaceCommand::redo() {
-    _gapBuffer->insertWithReplace(_position, _insertedText);
+    _gapBuffer->moveGapTo(_insertIndex);
+    _gapBuffer->insertWithReplace(_insertedText);
 }
 
 void InsertWithReplaceCommand::printHelp() const {
@@ -256,6 +276,26 @@ InsertWithReplaceCommand::~InsertWithReplaceCommand() {
     delete[] _replacedText;
     delete[] _insertedText;
 }
+
+void MoveCursonCommand::execute() {
+    int line, index;
+    std::cout << "Choose line and column to move the cursor (e.g. 8 2): " << std::flush;
+    scanf("%d %d", &line, &index);
+
+    int position = _gapBuffer->getIndexFromPosition({line, index});
+    if (position == -1) {
+        std::cout << "Invalid position" << std::endl;
+        return;
+    }
+
+    _gapBuffer->moveGapTo(position);
+}
+
+void MoveCursonCommand::printHelp() const {
+    std::cout << "move curson to a line and index. later, it will be printed as: |_|" << std::endl;
+}
+
+
 
 
 

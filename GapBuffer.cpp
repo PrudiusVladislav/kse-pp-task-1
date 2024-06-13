@@ -3,7 +3,6 @@
 #include <cstring>
 #include <iostream>
 #include <bits/streambuf_iterator.h>
-#include <format>
 
 
 #define INITIAL_LINE_STARTS_CAPACITY 10
@@ -31,11 +30,19 @@ int GapBuffer::getWindowLength() const {
 }
 
 int GapBuffer::getIndexFromPosition(const Position position) const {
+    if (!isPositionValid(position)) {
+        return -1;
+    }
+
     return _lineStarts[position.line].position + position.index;
 }
 
+Position GapBuffer::getCursorPosition() const {
+    return _cursorPosition;
+}
+
 bool GapBuffer::isPositionValid(Position position) const {
-    if (position.line >= 0 && position.line < _linesCount) {
+    if (position.line >= 0 && position.line < _linesCount && position.index >= 0) {
         return true;
     }
 
@@ -114,6 +121,11 @@ void GapBuffer::updateLineStarts(const int position, const bool isInsert) {
 }
 
 void GapBuffer::moveGapTo(const int position) {
+    if (position < 0 || position > getContentLength()) {
+        std::cout << "GapBuffer.moveGapTo: Invalid position: " << position << std::endl;
+        return;
+    }
+
     if (position < _gap.from) {
         const int moveLength = _gap.from - position;
 
@@ -136,6 +148,8 @@ void GapBuffer::moveGapTo(const int position) {
         _gap.to += moveLength;
         _gap.from += moveLength;
     }
+
+    _cursorPosition = getPositionFromIndex(position);
 }
 
 void GapBuffer::append(const char *text) {
@@ -172,6 +186,9 @@ void GapBuffer::print() const{
     for (int i = 0; i < _gap.from; i++) {
         std::cout << _buffer[i] << std::flush;
     }
+
+    std::cout << "|_|" << std::flush;
+
     for (int i = _gap.to; i < _length; i++) {
         std::cout << _buffer[i] << std::flush;
     }
@@ -246,15 +263,7 @@ void GapBuffer::loadFromFile(const char *filename) {
     }
 }
 
-void GapBuffer::insertAt(Position position, const char *text) {
-    if (position.line < 0 || position.line >= _linesCount) {
-        std::cout << "Invalid line number" << std::endl;
-        return;
-    }
-
-    const int positionIndex = _lineStarts[position.line].position + position.index;
-    moveGapTo(positionIndex);
-
+void GapBuffer::insertAt(const char *text) {
     const int textLength = strlen(text);
     const int gapLength = getWindowLength();
 
@@ -266,7 +275,7 @@ void GapBuffer::insertAt(Position position, const char *text) {
     _isSaved = false;
 
     // Update positions of subsequent lines
-    for (int i = position.line + 1; i < _linesCount; i++) {
+    for (int i = _cursorPosition.line + 1; i < _linesCount; i++) {
         _lineStarts[i].position += textLength;
     }
 
@@ -297,15 +306,7 @@ void GapBuffer::search(const char *text) const {
     }
 }
 
-char *GapBuffer::remove(Position position, const int length) {
-    if (position.line < 0 || position.line >= _linesCount) {
-        std::cout << "Invalid line number" << std::endl;
-        return nullptr;
-    }
-
-    const int positionIndex = _lineStarts[position.line].position + position.index;
-    moveGapTo(positionIndex);
-
+char *GapBuffer::remove(const int length) {
     const int deleteLength = std::min(length, _length - _gap.to);
 
     for (int i = _gap.to; i < _gap.to + deleteLength; i++) {
@@ -318,31 +319,20 @@ char *GapBuffer::remove(Position position, const int length) {
     strncpy(deletedText, _buffer + _gap.to, deleteLength);
     deletedText[deleteLength] = '\0';
     _gap.to += deleteLength;
-    for (int i = position.line + 1; i < _linesCount; i++) {
+    for (int i = _cursorPosition.line + 1; i < _linesCount; i++) {
         _lineStarts[i].position -= deleteLength;
     }
 
     return deletedText;
 }
 
-char *GapBuffer::cut(Position position, int length) {
-    if (!isPositionValid(position)) {
-        std::cout << "Invalid line number" << std::endl;
-        return nullptr;
-    }
-
-    _copiedText = remove(position, length);
+char *GapBuffer::cut(int length) {
+    _copiedText = remove(length);
     return _copiedText;
 }
 
-char *GapBuffer::copy(Position position, int length) {
-    if (!isPositionValid(position)) {
-        std::cout << "Invalid line number" << std::endl;
-        return nullptr;
-    }
-
-    const int positionIndex = getIndexFromPosition(position);
-    moveGapTo(positionIndex);
+char *GapBuffer::copy(int length) {
+    const int positionIndex = getIndexFromPosition(_cursorPosition);
     const int copiedLength = std::min(length, _length - _gap.to);
 
     _copiedText = StringUtils::CreateString(length);
@@ -350,32 +340,20 @@ char *GapBuffer::copy(Position position, int length) {
     return _copiedText;
 }
 
-char *GapBuffer::paste(Position position) {
-    if (!isPositionValid(position)) {
-        std::cout << "Invalid line number" << std::endl;
-        return nullptr;
-    }
-
+char *GapBuffer::paste() {
     if (_copiedText == nullptr) {
         std::cout << "No text to paste" << std::endl;
         return nullptr;
     }
 
-    insertAt(position, _copiedText);
+    insertAt(_copiedText);
     return _copiedText;
 }
 
-char *GapBuffer::insertWithReplace(Position position, const char *text) {
-    if (!isPositionValid(position)) {
-        std::cout << "Invalid line number" << std::endl;
-        return nullptr;
-    }
-
-    const int positionIndex = getIndexFromPosition(position);
-    moveGapTo(positionIndex);
+char *GapBuffer::insertWithReplace(const char *text) {
     const int textLength = strlen(text);
-    char *replacedText = remove(position, textLength);
-    insertAt(position, text);
+    char *replacedText = remove(textLength);
+    insertAt(text);
 
     return replacedText;
 }
