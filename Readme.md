@@ -45,3 +45,50 @@ This document describes several workflows for testing the text editor implementa
 2. Use the `search` command to search for text in the buffer.
 
 ![Workflow 5 Screenshot](/workflows/images/workflow5_result.png)
+
+## Workflow 6 (start of the assignment 2 (OOP hell))
+
+1. Use the `append` command to append text to the end of the buffer.
+2. Use the `delete` command to delete a portion of the text.
+3. Use the `print` command to print the contents of the buffer.
+
+![Workflow 6 Screenshot](/workflows/images/workflow6_result.png)
+
+## Workflow 7
+
+1. Use the `append` command to append text to the end of the buffer.
+2. Use the `cut` command to cut a portion of the text.
+3. Use the `print` command to print the contents of the buffer.
+4. Use the `paste` command to paste the previously cut text.
+5. Use the `print` command to print the contents of the buffer.
+
+![Workflow 7 Screenshot](/workflows/images/workflow7_result.png)
+
+## Workflow 8
+
+1. Use the `append` command to append text to the end of the buffer.
+2. Use the `copy` command to copy a portion of the text.
+3. Use the `print` command to print the contents of the buffer.
+4. Use the `paste` command to paste the previously copied text.
+5. Use the `print` command to print the contents of the buffer.
+
+![Workflow 8 Screenshot](/workflows/images/workflow8_result.png)
+
+## Workflow 9
+
+1. Use the `append` command to append text to the end of the buffer.
+2. Use the `insertWithReplace` command to insert new text and replace a portion of the existing text.
+3. Use the `print` command to print the contents of the buffer.
+
+![Workflow 9 Screenshot](/workflows/images/workflow9_result.png)
+
+## Workflow 10
+
+1. Use the `append` command to append text to the end of the buffer.
+2. Use the `cut` command to cut a portion of the text.
+3. Use the `print` command to print the contents of the buffer.
+4. Use the `paste` command to paste the previously cut text.
+5. Use the `insertWithReplace` command to insert new text and replace a portion of the existing text.
+6. Use the `print` command to print the contents of the buffer.
+
+![Workflow 10 Screenshot](/workflows/images/workflow10_result.png)
