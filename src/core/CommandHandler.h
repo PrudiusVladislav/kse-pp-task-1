@@ -5,7 +5,7 @@
 #include <stack>
 
 #include "GapBuffer.h"
-#include "Commands.h"
+#include "../commands/Commands.h"
 
 class CommandHandler {
 public:

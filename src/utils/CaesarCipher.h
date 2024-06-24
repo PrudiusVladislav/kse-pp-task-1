@@ -5,10 +5,10 @@
 
 typedef char*(*function_ptr)(char*, int);
 
-class CeasarCipher {
+class CaesarCipher {
 public:
-    CeasarCipher();
-    explicit CeasarCipher(int shift);
+    CaesarCipher();
+    explicit CaesarCipher(int shift);
     void setShift(int shift);
     int getShift();
     char *encrypt(char* text);

@@ -1,8 +1,8 @@
 
 #ifndef COMMANDS_H
 #define COMMANDS_H
-#include "CeasarCipher.h"
-#include "GapBuffer.h"
+#include "../utils/CaesarCipher.h"
+#include "../core/GapBuffer.h"
 
 struct ICommand {
     ICommand() = default;
@@ -242,7 +242,7 @@ class CipherCommand {
 public:
     void cipher();
 protected:
-    CeasarCipher *_cipher;
+    CaesarCipher *_cipher;
     virtual char *processChunk(char *chunk) = 0;
 };
 

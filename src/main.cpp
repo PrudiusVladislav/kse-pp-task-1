@@ -3,9 +3,9 @@
 #include <string>
 #include <iostream>
 
-#include "CommandHandler.h"
-#include "GapBuffer.h"
-#include "StringUtils.h"
+#include "core/CommandHandler.h"
+#include "core/GapBuffer.h"
+#include "utils/StringUtils.h"
 
 
 char *promptForInputCommand() {

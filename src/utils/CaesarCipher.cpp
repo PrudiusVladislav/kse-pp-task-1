@@ -1,5 +1,5 @@
 
-#include "CeasarCipher.h"
+#include "CaesarCipher.h"
 #include <string>
 #include <windows.h>
 #include <filesystem>
@@ -7,11 +7,12 @@
 
 std::string getDllPath(const char *dllName)
 {
-    std::filesystem::path cwd = std::filesystem::current_path() / dllName;
+    std::filesystem::path cwd = std::filesystem::absolute(R"(C:\C\kse-pp-task-1\src)");
+    cwd /= dllName;
     return cwd.string();
 }
 
-function_ptr CeasarCipher::getFunction(const char *name)
+function_ptr CaesarCipher::getFunction(const char *name)
 {
     if (_handle == nullptr || _handle == INVALID_HANDLE_VALUE)
     {
@@ -22,7 +23,7 @@ function_ptr CeasarCipher::getFunction(const char *name)
 }
 
 
-CeasarCipher::CeasarCipher() {
+CaesarCipher::CaesarCipher() {
     _handle = LoadLibrary(getDllPath("encrypt.dll").c_str());
     if (_handle == nullptr || _handle == INVALID_HANDLE_VALUE)
     {
@@ -30,7 +31,7 @@ CeasarCipher::CeasarCipher() {
     }
 }
 
-CeasarCipher::CeasarCipher(const int shift) {
+CaesarCipher::CaesarCipher(const int shift) {
     _shift = shift;
     _handle = LoadLibrary(getDllPath("encrypt.dll").c_str());
     if (_handle == nullptr || _handle == INVALID_HANDLE_VALUE)
@@ -39,15 +40,15 @@ CeasarCipher::CeasarCipher(const int shift) {
     }
 }
 
-void CeasarCipher::setShift(const int shift) {
+void CaesarCipher::setShift(const int shift) {
     _shift = shift;
 }
 
-int CeasarCipher::getShift() {
+int CaesarCipher::getShift() {
     return _shift;
 }
 
-char * CeasarCipher::encrypt(char *text) {
+char * CaesarCipher::encrypt(char *text) {
     if (_shift == 0)
     {
         throw std::runtime_error("Shift not set");
@@ -57,7 +58,7 @@ char * CeasarCipher::encrypt(char *text) {
     return encrypt(text, _shift);
 }
 
-char * CeasarCipher::decrypt(char *text) {
+char * CaesarCipher::decrypt(char *text) {
     if (_shift == 0)
     {
         throw std::runtime_error("Shift not set");

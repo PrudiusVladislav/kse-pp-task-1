@@ -1,5 +1,5 @@
 #include "GapBuffer.h"
-#include "StringUtils.h"
+#include "../utils/StringUtils.h"
 #include <cstring>
 #include <iostream>
 #include <bits/streambuf_iterator.h>

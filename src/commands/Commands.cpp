@@ -317,7 +317,7 @@ void CipherCommand::cipher() {
         return;
     }
 
-    _cipher = new CeasarCipher(key);
+    _cipher = new CaesarCipher(key);
     auto textChunk = new char[256];
     while (fgets(textChunk, sizeof(textChunk), inputFile) != nullptr) {
         textChunk = processChunk(textChunk);

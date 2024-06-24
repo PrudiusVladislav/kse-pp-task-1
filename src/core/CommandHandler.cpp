@@ -1,5 +1,5 @@
 
-#include "CommandHandler.h"
+#include "../core/CommandHandler.h"
 
 #include <functional>
 #include <iostream>
