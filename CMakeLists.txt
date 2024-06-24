@@ -12,4 +12,6 @@ add_executable(kse_pp_task_1 main.cpp
         CommandHandler.h
         CommandHandler.cpp
         Commands.h
-        Commands.cpp)
+        Commands.cpp
+        CeasarCipher.h
+        CeasarCipher.cpp)
