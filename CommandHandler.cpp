@@ -21,6 +21,8 @@ CommandHandler::CommandHandler(GapBuffer *gb, bool *isRunning) : _gb(gb), _isRun
     _commands.push_back(new PasteCommand());
     _commands.push_back(new InsertWithReplaceCommand());
     _commands.push_back(new MoveCursonCommand());
+    _commands.push_back(new EncryptFileCommand());
+    _commands.push_back(new DecryptFileCommand());
 }
 
 void CommandHandler::handleHelp() {

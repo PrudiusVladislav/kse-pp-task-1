@@ -292,6 +292,68 @@ void MoveCursonCommand::printHelp() const {
     std::cout << "move curson to a line and index. later, it will be printed as: |_|" << std::endl;
 }
 
+void CipherCommand::cipher() {
+    int key;
+    char inputFilename[250];
+    char outputFilename[250];
+
+    std::cout << "Enter the key for encryption/decryption: " << std::flush;
+    std::cin >> key;
+
+    std::cout << "Enter the file name for processing: " << std::flush;
+    std::cin >> inputFilename;
+    std::cout << "Enter the file name for saving the processed text: " << std::flush;
+    std::cin >> outputFilename;
+
+    FILE *inputFile = fopen(inputFilename, "r");
+    if (inputFile == nullptr) {
+        std::cout << "Error opening file for reading" << std::endl;
+        return;
+    }
+
+    FILE *outputFile = fopen(outputFilename, "w");
+    if (outputFile == nullptr) {
+        std::cout << "Error opening file for writing" << std::endl;
+        return;
+    }
+
+    _cipher = new CeasarCipher(key);
+    auto textChunk = new char[256];
+    while (fgets(textChunk, sizeof(textChunk), inputFile) != nullptr) {
+        textChunk = processChunk(textChunk);
+        fputs(textChunk, outputFile);
+    }
+
+    fclose(inputFile);
+    fclose(outputFile);
+    delete[] textChunk;
+}
+
+char *EncryptFileCommand::processChunk(char *chunk) {
+    return _cipher->encrypt(chunk);
+}
+
+void EncryptFileCommand::execute() {
+    cipher();
+}
+
+void EncryptFileCommand::printHelp() const {
+    std::cout << "encrypt a file using the Caesar cipher" << std::endl;
+}
+
+char *DecryptFileCommand::processChunk(char *chunk) {
+    return _cipher->decrypt(chunk);
+}
+
+void DecryptFileCommand::execute() {
+    cipher();
+}
+
+void DecryptFileCommand::printHelp() const {
+    std::cout << "decrypt a file using the Caesar cipher" << std::endl;
+}
+
+
 
 
 

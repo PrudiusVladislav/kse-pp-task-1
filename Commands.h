@@ -1,6 +1,7 @@
 
 #ifndef COMMANDS_H
 #define COMMANDS_H
+#include "CeasarCipher.h"
 #include "GapBuffer.h"
 
 struct ICommand {
@@ -235,6 +236,42 @@ public:
     ICommand *create(GapBuffer *gapBuffer, bool *isRunning) override {
         return new MoveCursonCommand(gapBuffer, isRunning);
     }
+};
+
+class CipherCommand {
+public:
+    void cipher();
+protected:
+    CeasarCipher *_cipher;
+    virtual char *processChunk(char *chunk) = 0;
+};
+
+class EncryptFileCommand final : public ICommand, public CipherCommand {
+public:
+    EncryptFileCommand() = default;
+    EncryptFileCommand(GapBuffer *gapBuffer, bool *isRunning) : ICommand(gapBuffer, isRunning) {}
+    [[nodiscard]] const char *getName() const override { return "encrypt"; }
+    void execute() override;
+    void printHelp() const override;
+    ICommand *create(GapBuffer *gapBuffer, bool *isRunning) override {
+        return new EncryptFileCommand(gapBuffer, isRunning);
+    }
+protected:
+    char *processChunk(char *chunk) override;
+};
+
+class DecryptFileCommand final : public ICommand, public CipherCommand{
+public:
+    DecryptFileCommand() = default;
+    DecryptFileCommand(GapBuffer *gapBuffer, bool *isRunning) : ICommand(gapBuffer, isRunning) {}
+    [[nodiscard]] const char *getName() const override { return "decrypt"; }
+    void execute() override;
+    void printHelp() const override;
+    ICommand *create(GapBuffer *gapBuffer, bool *isRunning) override {
+        return new DecryptFileCommand(gapBuffer, isRunning);
+    }
+protected:
+    char *processChunk(char *chunk) override;
 };
 
 #endif //COMMANDS_H
